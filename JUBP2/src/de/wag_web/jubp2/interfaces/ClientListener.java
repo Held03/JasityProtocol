@@ -17,15 +17,17 @@ public interface ClientListener {
 	 * Established connection to server.
 	 * <p/>
 	 * This is invoked if the client established successfully a connection to a server.
+	 * <p/>
+	 * @return the established connection
 	 */
-	public void connected(conn);
+	public void connected(Connection conn);
 	
 	/**
 	 * The connection to the server was lost.
 	 * <p/>
 	 * This is invoked if the connection to the server breaks/ends anyhow.
 	 */
-	public void connectionLost(conn);
+	public void connectionLost();
 	
 	/**
 	 * New message received.
@@ -41,7 +43,8 @@ public interface ClientListener {
 	 * <p/>
 	 * The default should be <code>true</code>, if used with the listeners.
 	 * <p/>
+	 * @param msg the received message
 	 * @return <code>true</code> if the given message was accepted
 	 */
-	public boolean newMessage(msg);
+	public boolean newMessage(Message msg);
 }

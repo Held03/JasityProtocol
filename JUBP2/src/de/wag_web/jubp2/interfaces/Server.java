@@ -1,7 +1,9 @@
 package de.wag_web.jubp2.interfaces;
 
+import java.util.List;
+
 /**
- * Manage the general connections and organization of the clients. 
+ * Manage the general connections and organization of the connections to the clients. 
  * <p/>
  * @author held03
  */
@@ -12,8 +14,8 @@ public interface Server {
 	 * <p/>
 	 * This means that the server starts listening on the server port.
 	 * <p/>
-	 * Notic that this will only work on a new server instance.
-	 * If it was already stated this method will fail, also if it was stopped with {@link #stopConnection()}.
+	 * Notice that this will only work on a new server instance.
+	 * If it was already stated, this method will fail, also if it was stopped with {@link #stopConnection()}.
 	 */
 	public void startConnection();
 	
@@ -27,12 +29,14 @@ public interface Server {
 	/**
 	 * Broadcasts a message to all clients.
 	 */
-	public void broadcast(msg);
+	public void broadcast(Message msg);
 	
 	/**
 	 * Gets all connections to clients.
+	 * <p/>
+	 * @return a list of all connections
 	 */
-	public List getConnections();
+	public List<Connection> getConnections();
 	
 	/**
 	 * Adds a listener for this server.

@@ -22,16 +22,19 @@ public interface ServerListener {
 	 * <code>true</code> indicates that the client is accepted, <code>false</code> will break the connection
 	 * to the client.
 	 * <p/>
+	 * @param conn the new connection
 	 * @return <code>true</code> if the given client was accepted
 	 */
-	public boolean newConnection(conn);
+	public boolean newConnection(Connection conn);
 	
 	/**
 	 * The connection to a client was lost.
 	 * <p/>
 	 * This is invoked if the connection to a client breaks/ends anyhow.
+	 * <p/>
+	 * @param conn the old connection
 	 */
-	public void connectionLost(conn);
+	public void connectionLost(Connection conn);
 	
 	/**
 	 * New message received.
