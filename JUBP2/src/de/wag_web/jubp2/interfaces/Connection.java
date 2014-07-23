@@ -7,6 +7,9 @@ import java.util.concurrent.Future;
  * <p/>
  * This could be once either a connection to a client or to a server.
  * Anyway it has the same functionality.
+ * <p>
+ * A connection is opened as construction.
+ * The class defines the real type of the underlying system.
  * <p/>
  * @author held03
  */
@@ -77,4 +80,6 @@ public interface Connection {
 	 * @param listener the listener to remove
 	 */
 	public void removeListener(Object listener);
+	
+	//TODO add filters!
 }

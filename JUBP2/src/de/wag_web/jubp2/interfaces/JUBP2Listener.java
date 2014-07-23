@@ -21,6 +21,10 @@ import java.lang.annotation.Target;
  * <p>
  * The default return value of such a method is <code>false</code>.
  * <p>
+ * It is allowed that a class/object has multiple and different such listeners.
+ * They are registered at once if the object is registered.
+ * And separately invoked as they are defined.  
+ * <p>
  * @author held03
  */
 @Documented
