@@ -1,5 +1,6 @@
 package de.wag_web.jubp2.base;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.logging.Logger;
 import de.wag_web.jubp2.interfaces.Connection;
 import de.wag_web.jubp2.interfaces.JUBP2Listener;
 import de.wag_web.jubp2.interfaces.Message;
+import de.wag_web.jubp2.interfaces.ConnectionManager;
 
 /**
  * The general implementation.
@@ -29,7 +31,18 @@ public abstract class AbstractConnection implements Connection {
 	 */
 	protected Set<ListenerContainer> messageListeners = new HashSet<>();
 	
-	public AbstractConnection() {
+	/**
+	 * The manager of this connection.
+	 * <p>
+	 * This is the connection callback.
+	 */
+	protected ConnectionManager manager;
+	
+	/**
+	 * Normal constructor.
+	 */
+	public AbstractConnection(ConnectionManager manager) {
+		this.manager = manager;
 		
 	}
 
@@ -93,6 +106,73 @@ public abstract class AbstractConnection implements Connection {
 	}
 	
 	/**
+	 * Delivers a message to the specific listeners.
+	 * <p>
+	 * First this method will check the message with the manager {@link ConnectionManager#checkMessage(Message)}.
+	 * If it returns <code>true</code> it will be delivered to all fitting and registered listeners.
+	 * Until one listener returned <code>true</code> or the end of the list is reached.
+	 * <p>
+	 * If a listener of a specific level returns <code>true</code> all other listener of the same level
+	 * gets the message still before this method returns.
+	 * At least all listeners of lower levels don't get the message.
+	 * <p>
+	 * @param msg
+	 */
+	protected void deliverMessage(Message msg) {
+		if (manager == null) {
+			Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, 
+					"A message was received but no manager was set for the connection!");
+			throw new IllegalStateException("Message couldn't be delivered, because no manager was set.");
+		}
+		
+		if (manager.checkMessage(msg)) {
+			//manager accept message
+
+			HashMap<JUBP2Listener.Level, HashSet<ListenerContainer>> msgToSend = new HashMap<>();
+			
+			synchronized (messageListeners) {
+				for (ListenerContainer container : messageListeners) {
+					if (container.message.isAssignableFrom(msg.getClass())) {
+						if (msgToSend.get(container.priority) == null)
+							msgToSend.put(container.priority, new HashSet<ListenerContainer>());
+						msgToSend.get(container.priority).add(container);
+					}
+				}
+			}
+			
+			boolean consumed = false;
+			
+			for(JUBP2Listener.Level level : JUBP2Listener.Level.values()) {
+				for(ListenerContainer container : msgToSend.get(level)) {
+					try {
+						if (container.callback.invoke(container.object, msg).equals(Boolean.TRUE)) {
+							consumed = true;
+						}
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+						Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, 
+								"Listener invokation fails!", e);
+					} catch (IllegalArgumentException e) {
+						e.printStackTrace();
+						Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, 
+								"Listener invokation fails!", e);
+					} catch (InvocationTargetException e) {
+						e.printStackTrace();
+						Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, 
+								"Listener invokation fails!", e);
+					}
+				}
+				
+				if (consumed)
+					break;
+			}
+			
+		} else {
+			//manager reject message
+		}
+	}
+	
+	/**
 	 * Contains a listener object.
 	 * <p>
 	 * This class is for holding the listeners related objects together.
@@ -132,7 +212,7 @@ public abstract class AbstractConnection implements Connection {
 		public JUBP2Listener.Level priority;
 		
 		/**
-		 * The empty constructor.
+		 * Creates a new container with given content.
 		 */
 		public ListenerContainer(Object object, Class<? extends Message> message, Method callback,
 				JUBP2Listener.Level priority) {
@@ -144,7 +224,7 @@ public abstract class AbstractConnection implements Connection {
 		}
 		
 		/**
-		 * The empty constructor.
+		 * Creates a empty instance.
 		 */
 		public ListenerContainer() {
 			

@@ -50,7 +50,8 @@ public interface ServerListener {
 	 * <p/>
 	 * The default should be <code>true</code>, if used with the listeners.
 	 * <p/>
+	 * @param msg the new message to accept
 	 * @return <code>true</code> if the given message was accepted
 	 */
-	public boolean newMessage(msg);
+	public boolean newMessage(Message msg);
 }
