@@ -24,14 +24,14 @@
  *
  */
 
-package de.wag_web.jubp2.interfaces;
-
 /**
- * This represents a transferable message.
- * <p/>
- * 
+ * Defines the standard factories for the library.
+ * <p>
+ * In this package are the default packages defined and the factory links set.
+ * <p>
+ * All implementation should use these factories to get a instance. 
+ * <p>
  * @author held03
  */
-public interface Message {
 
-}
+package com.github.held03.jasityProtocol.factories;

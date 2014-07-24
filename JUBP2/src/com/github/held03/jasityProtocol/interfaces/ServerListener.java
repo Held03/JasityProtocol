@@ -24,7 +24,7 @@
  *
  */
 
-package de.wag_web.jubp2.interfaces;
+package com.github.held03.jasityProtocol.interfaces;
 
 /**
  * Allows the receiving of server related events.

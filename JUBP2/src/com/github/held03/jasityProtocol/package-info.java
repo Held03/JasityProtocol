@@ -32,4 +32,4 @@
  * @author held03
  */
 
-package de.wag_web.jubp2;
+package com.github.held03.jasityProtocol;

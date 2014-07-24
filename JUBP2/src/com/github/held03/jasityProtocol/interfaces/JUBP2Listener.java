@@ -24,7 +24,7 @@
  *
  */
 
-package de.wag_web.jubp2.interfaces;
+package com.github.held03.jasityProtocol.interfaces;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

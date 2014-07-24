@@ -24,7 +24,7 @@
  *
  */
 
-package de.wag_web.jubp2.interfaces;
+package com.github.held03.jasityProtocol.interfaces;
 
 /**
  * Manage the general connections and organization of the connection to the server.

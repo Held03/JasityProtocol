@@ -24,7 +24,7 @@
  *
  */
 
-package de.wag_web.jubp2.interfaces;
+package com.github.held03.jasityProtocol.interfaces;
 
 /**
  * Defines a class which generally manages the connection and the message transfer a bit.

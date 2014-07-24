@@ -24,7 +24,7 @@
  *
  */
 
-package de.wag_web.jubp2.base;
+package com.github.held03.jasityProtocol.base;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -36,11 +36,11 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import de.wag_web.jubp2.interfaces.Connection;
-import de.wag_web.jubp2.interfaces.JUBP2Listener;
-import de.wag_web.jubp2.interfaces.Message;
-import de.wag_web.jubp2.interfaces.ConnectionManager;
-import de.wag_web.jubp2.interfaces.NodeConnection;
+import com.github.held03.jasityProtocol.interfaces.Connection;
+import com.github.held03.jasityProtocol.interfaces.ConnectionManager;
+import com.github.held03.jasityProtocol.interfaces.JUBP2Listener;
+import com.github.held03.jasityProtocol.interfaces.Message;
+import com.github.held03.jasityProtocol.interfaces.NodeConnection;
 
 
 /**
