@@ -14,6 +14,7 @@ import de.wag_web.jubp2.interfaces.Connection;
 import de.wag_web.jubp2.interfaces.JUBP2Listener;
 import de.wag_web.jubp2.interfaces.Message;
 import de.wag_web.jubp2.interfaces.ConnectionManager;
+import de.wag_web.jubp2.interfaces.NodeConnection;
 
 /**
  * The general implementation.
@@ -54,29 +55,57 @@ public abstract class AbstractConnection implements Connection {
 
 	@Override
 	public void addListener(Object listener) {
+		// list for adding the new listeners
 		HashSet<ListenerContainer> msgToAdd = new HashSet<>();
 		
 		Class<?> clazz = listener.getClass();
 		
+		// gets the methods and check them if there is a listener
 		for (Method method : clazz.getMethods()) {
+			
+			// first check if the annotation is set
 			JUBP2Listener list = method.getAnnotation(JUBP2Listener.class);
 			
-			if (list == null)
-				continue;
+			if (list == null) {
+				continue; // if not go on with the next one
+			}
 			
+			// check if the return value is boolean
 			Class<?> returning = method.getReturnType();
 			
-			if (!returning.equals(Boolean.class))
+			if (!returning.equals(Boolean.class)) {
+				// if not warn and go on with the next one
+				Logger.getLogger(AbstractConnection.class.getName()).log(Level.FINE, 
+						"A method ({5}) was added makred as listener, but it has the worong return value {3}, expect {4}! For object {1} into {2}",
+						new Object[]{listener, this, returning.getCanonicalName(), Boolean.class.getCanonicalName(), method.getName()});
 				continue;
+			}
 			
+			// check the parameter configuration
 			Class<?>[] parameter = method.getParameterTypes();
 			
-			if (parameter.length != 1 || !Message.class.isAssignableFrom(parameter[0]))
+			// either it has one argument with a message
+			if (parameter.length == 1 && Message.class.isAssignableFrom(parameter[0]))
+				;
+			// or tow argument, first a message, second a nodeConnection
+			else if (parameter.length == 2 &&
+					(Message.class.isAssignableFrom(parameter[0]) &&
+					NodeConnection.class.isAssignableFrom(parameter[1])))
+				;
+			// any other configuration are rejected!
+			else {
+				// warn and go on with the next one
+				Logger.getLogger(AbstractConnection.class.getName()).log(Level.FINE, 
+						"A method ({5}) was added makred as listener, but it has the worong return value {3}, expect {4}! For object {1} into {2}",
+						new Object[]{listener, this, returning.getCanonicalName(), Boolean.class.getCanonicalName(), method.getName()});
 				continue;
+			}
 			
+			// add method to list
 			msgToAdd.add(new ListenerContainer(listener, parameter[0].asSubclass(Message.class), method, list.level()));
 		}
 		
+		// checks if at least one valid listener was found 
 		if (msgToAdd.isEmpty()) {
 			Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, 
 					"A listener was added but it could NOT find a valid listener method! For object {1} into {2}",
@@ -85,6 +114,7 @@ public abstract class AbstractConnection implements Connection {
 			return;
 		}
 		
+		// synchronize and add the listeners
 		synchronized (messageListeners) {
 			messageListeners.addAll(msgToAdd);
 		}
@@ -93,14 +123,19 @@ public abstract class AbstractConnection implements Connection {
 	@Override
 	public void removeListener(Object listener) {
 		synchronized (messageListeners) {
+			// creates a list for removing the proper entries later
 			HashSet<ListenerContainer> msgToRm = new HashSet<>();
 			
+			// search for all listeners related to the given object
 			for (ListenerContainer container : messageListeners) {
+				
 				if (container.object.equals(listener)) {
+					// if one found add it to the list
 					msgToRm.add(container);
 				}
 			}
 			
+			// finally removes all selected listeners
 			messageListeners.removeAll(msgToRm);
 		}
 	}
@@ -108,7 +143,7 @@ public abstract class AbstractConnection implements Connection {
 	/**
 	 * Delivers a message to the specific listeners.
 	 * <p>
-	 * First this method will check the message with the manager {@link ConnectionManager#checkMessage(Message)}.
+	 * First this method will check the message with the manager {@link ConnectionManager#checkMessage(Message, Connection)}.
 	 * If it returns <code>true</code> it will be delivered to all fitting and registered listeners.
 	 * Until one listener returned <code>true</code> or the end of the list is reached.
 	 * <p>
@@ -118,51 +153,72 @@ public abstract class AbstractConnection implements Connection {
 	 * <p>
 	 * @param msg
 	 */
-	protected void deliverMessage(Message msg) {
+	protected void deliverMessage(Message msg, NodeConnection node) {
+		// check if a manager was preset
 		if (manager == null) {
 			Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, 
 					"A message was received but no manager was set for the connection!");
 			throw new IllegalStateException("Message couldn't be delivered, because no manager was set.");
 		}
 		
-		if (manager.checkMessage(msg)) {
-			//manager accept message
+		// lets the manager check the incoming message
+		// the manager is either the server or the client instance, or the appropriate listener
+		if (manager.checkMessage(msg, node)) {
+			//manager accepted message, go on with listeners
 
+			// map listeners to their appropriate level
 			HashMap<JUBP2Listener.Level, HashSet<ListenerContainer>> msgToSend = new HashMap<>();
 			
+			// adds a list/set for every level
+			for(JUBP2Listener.Level level : JUBP2Listener.Level.values()) {
+				msgToSend.put(level, new HashSet<ListenerContainer>());
+			}
+			
+			// gets the listener to send to, and map them by level
 			synchronized (messageListeners) {
 				for (ListenerContainer container : messageListeners) {
+					
+					// check if the listener accepts the give message type
 					if (container.message.isAssignableFrom(msg.getClass())) {
-						if (msgToSend.get(container.priority) == null)
-							msgToSend.put(container.priority, new HashSet<ListenerContainer>());
 						msgToSend.get(container.priority).add(container);
 					}
 				}
 			}
 			
+			// indicates if a listener returned true
 			boolean consumed = false;
 			
+			// sends the message
 			for(JUBP2Listener.Level level : JUBP2Listener.Level.values()) {
 				for(ListenerContainer container : msgToSend.get(level)) {
 					try {
-						if (container.callback.invoke(container.object, msg).equals(Boolean.TRUE)) {
-							consumed = true;
+						// check the argument configuration 
+						if (container.callback.getParameterTypes().length == 1) {
+							// call the listener with one argument
+							// and check the return value
+							if (container.callback.invoke(container.object, msg).equals(Boolean.TRUE)) {
+								consumed = true;
+							}
+						} else if (container.callback.getParameterTypes().length == 2) {
+							// call the listener with the additional nodeConnection arg
+							// and check the return value
+							if (container.callback.invoke(container.object, msg, node).equals(Boolean.TRUE)) {
+								consumed = true;
+							}
+						} else {
+							
 						}
-					} catch (IllegalAccessException e) {
+						
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 						e.printStackTrace();
 						Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, 
-								"Listener invokation fails!", e);
-					} catch (IllegalArgumentException e) {
-						e.printStackTrace();
+								"Listener invokation fails! object {1}; method {2}", new Object[]{container.object, container.callback.getName()});
 						Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, 
-								"Listener invokation fails!", e);
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
-						Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, 
-								"Listener invokation fails!", e);
+								"", e);
 					}
 				}
 				
+				// if one listener returns true, don't call lower listeners 
 				if (consumed)
 					break;
 			}

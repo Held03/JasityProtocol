@@ -34,9 +34,9 @@ public interface Server {
 	/**
 	 * Gets all connections to clients.
 	 * <p/>
-	 * @return a list of all connections
+	 * @return a list of all connection nodes
 	 */
-	public List<Connection> getConnections();
+	public List<NodeConnection> getNodes();
 	
 	/**
 	 * Adds a listener for this server.

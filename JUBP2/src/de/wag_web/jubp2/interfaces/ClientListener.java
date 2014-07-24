@@ -20,7 +20,7 @@ public interface ClientListener {
 	 * <p/>
 	 * @return the established connection
 	 */
-	public void connected(Connection conn);
+	public void connected();
 	
 	/**
 	 * The connection to the server was lost.

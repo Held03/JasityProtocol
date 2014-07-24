@@ -28,7 +28,8 @@ public interface ConnectionManager {
 	 * or the {@link ServerListener#newMessage(Message)}
 	 * <p/>
 	 * @param msg the new message to accept
+	 * @param con the node the message was received from
 	 * @return <code>true</code> if the given message was accepted
 	 */
-	public boolean checkMessage(Message msg);
+	public boolean checkMessage(Message msg, NodeConnection con);
 }
