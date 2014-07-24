@@ -1,5 +1,5 @@
 JasityProtocol
-==================
+==============
 
 The JasityProtocol provides a simple way to implement server-client
 connections over the network, e.g. LAN or Internet.
