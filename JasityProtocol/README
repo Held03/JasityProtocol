@@ -26,8 +26,8 @@ If you are interested to contribute, fork it, change it and send a pull request.
 Notice it is recommend to use eclipse IDE http://eclipse.org/
 
 About formatting: we use tabs for intent an no spaces.
-For eclipse there is a project specific formatter added, use it before commiting.
+For eclipse there is a project specific formatter added, use it before committing.
 
 ### License
 
-New BSD (3-clause) License. In other words, you do whatever makes you happy!
+Apache License Version 2.0, January 2004
