@@ -66,6 +66,7 @@ public interface NodeConnection {
 		 * At this state no messages are transmitted.
 		 */
 		PRE_CONNECTION,
+
 		/**
 		 * State while the filters are initiating.
 		 * <p>
@@ -73,6 +74,7 @@ public interface NodeConnection {
 		 * {@link Message.Transport#OPTIONALLY} are transmitted.
 		 */
 		FILTER_INITIATION,
+
 		/**
 		 * Normal open working state.
 		 * <p>
@@ -80,6 +82,7 @@ public interface NodeConnection {
 		 * and received.
 		 */
 		OPEN,
+
 		/**
 		 * Post connection state.
 		 * <p>

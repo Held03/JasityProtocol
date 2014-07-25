@@ -63,7 +63,6 @@ public interface Server {
 
 	/**
 	 * Gets all connections to clients.
-	 * <p>
 	 * 
 	 * @return a list of all connection nodes
 	 */
@@ -71,7 +70,6 @@ public interface Server {
 
 	/**
 	 * Adds a listener for this server.
-	 * <p>
 	 * 
 	 * @param listener the listener to add
 	 */
@@ -79,7 +77,6 @@ public interface Server {
 
 	/**
 	 * Removes a listener from this server.
-	 * <p>
 	 * 
 	 * @param listener the listener to remove
 	 */

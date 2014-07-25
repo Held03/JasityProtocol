@@ -30,14 +30,46 @@
  * These interfaces represent the core of this library.
  * They are the thing to use.
  * <p>
- * For a working usage it needs to implement the {@link com.github.held03.jasityProtocol.interfaces.ClientListener},
- * {@link com.github.held03.jasityProtocol.interfaces.ServerListener} and some {@link com.github.held03.jasityProtocol.interfaces.Message}s.
- * Additional it is possible to use the {@link com.github.held03.jasityProtocol.interfaces.JPListener} annotation to
- * create message listeners.
+ * This defines a interface to be used either to implement a
+ * connection/transport system, and on the other side to implement a working
+ * implementation.
  * <p>
- * The other interfaces represents the server client system which is implemented by this library,
- * but are still implementable for expansion.
+ * The working implementation creates on the server-side a 
+ * {@link com.github.held03.jasityProtocol.interfaces.Server} instance or
+ * implement it. For the server it needs a
+ * {@link com.github.held03.jasityProtocol.interfaces.ClientListener}
+ * implementation.
+ * <br>
+ * On client-side the working implementation need a
+ * {@link com.github.held03.jasityProtocol.interfaces.Client} instance or
+ * implementation and for that in needs to implement a
+ * {@link com.github.held03.jasityProtocol.interfaces.ServerListener}.
+ * <br>
+ * Both can have some listeners defined with
+ * {@link com.github.held03.jasityProtocol.interfaces.JPListener} and
+ * registered either on a
+ * {@link com.github.held03.jasityProtocol.interfaces.Connection} or like
+ * recommended on a
+ * {@link com.github.held03.jasityProtocol.interfaces.NodeConnection}. The can
+ * be retrieved from the server or client instances.
+ * <br>
+ * Additional both need to implement some
+ * {@link com.github.held03.jasityProtocol.interfaces.Message}s or use some
+ * predefined. All the used messages must be available on both sides client
+ * and server. 
  * <p>
+ * Such a implementation should be independent from the underlying transport
+ * system. But it can be explicitly chosen by using a specific factory or by
+ * changing the default factories to a specific.
+ * <p>
+ * To implement a transport system it needs to implement a
+ * {@link com.github.held03.jasityProtocol.interfaces.Connection} and setup a
+ * specific factory for it. The connection must handle at least all defined
+ * message types within this package. If necessary also a
+ * {@link com.github.held03.jasityProtocol.interfaces.Server} and
+ * {@link com.github.held03.jasityProtocol.interfaces.Client} can be
+ * implemented.
+ * 
  * @author held03
  */
 
