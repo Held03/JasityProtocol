@@ -87,21 +87,21 @@ public interface Client {
 	/**
 	 * Gets the underlying connection of the client.
 	 * 
-	 * @return the local connection
+	 * @return the remote server node connection
 	 */
-	public Connection getConnection();
+	public NodeConnection getConnection();
 
 	/**
 	 * Adds a listener for this client.
 	 * 
 	 * @param listener the listener to add
 	 */
-	public void addListener(ServerListener listener);
+	public void addListener(ClientListener listener);
 
 	/**
 	 * Removes a listener from this client.
 	 * 
 	 * @param listener the listener to remove
 	 */
-	public void removeListener(ServerListener listener);
+	public void removeListener(ClientListener listener);
 }

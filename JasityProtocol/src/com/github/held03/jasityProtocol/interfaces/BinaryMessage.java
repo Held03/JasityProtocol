@@ -35,9 +35,13 @@ import java.nio.ByteBuffer;
  * This represents a message as described in {@link Message}, but this messages
  * will have a facility to code and decode them self to and from binary forms.
  * <p>
+ * This special kind of a message should be supported by every transport
+ * implementation.
+ * <p>
  * Notice that such a message need to have at least an empty constructor, this
- * means that the constructor has no arguments. For safety it is recommend to
- * declare it explicit. If not the reassembling will fail.
+ * means that one constructor has no arguments. For safety it is recommend to
+ * declare it explicit. If don't have such a constructor the reassembling will
+ * fail.
  * <p>
  * It is recommend that they can at least decode messages of old implementation
  * and/or ignore new/unknown arguments.

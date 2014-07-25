@@ -27,31 +27,33 @@
 package com.github.held03.jasityProtocol.base;
 
 import java.util.HashSet;
+import java.util.concurrent.Future;
 
+import com.github.held03.jasityProtocol.interfaces.Client;
+import com.github.held03.jasityProtocol.interfaces.ClientListener;
 import com.github.held03.jasityProtocol.interfaces.ConnectionManager;
 import com.github.held03.jasityProtocol.interfaces.Message;
+import com.github.held03.jasityProtocol.interfaces.Message.Priority;
 import com.github.held03.jasityProtocol.interfaces.NodeConnection;
-import com.github.held03.jasityProtocol.interfaces.Server;
-import com.github.held03.jasityProtocol.interfaces.ServerListener;
 
 
 /**
- * Implements some simple systems.
+ * Provides some simple implementations.
  * <p>
- * This class provides a simple broadcast method and listener adding and
- * removing as well as check message forwarding.
+ * This provides a listener management, as well as sending forward to the
+ * connection.
  * <p>
  * Additional it implements the {@link ConnectionManager}, what is recommended
- * for every server. So this implementation provides a default
+ * for every client. So this implementation provides a default
  * {@link ConnectionManager#checkMessage(Message, NodeConnection)} forwarding to
- * the {@link ServerListener}s.
+ * the {@link ClientListener}s.
  * 
  * @author held03
  */
-public abstract class AbstractServer implements Server, ConnectionManager {
+public abstract class AbstractClient implements Client, ConnectionManager {
 
 	/**
-	 * All registered ServerListeners.
+	 * All registered ClientListeners.
 	 * <p>
 	 * This field should be synchronized if accessed. Like:
 	 * 
@@ -61,13 +63,37 @@ public abstract class AbstractServer implements Server, ConnectionManager {
 	 * }
 	 * </pre>
 	 */
-	protected HashSet<ServerListener> listeners = new HashSet<>();
+	protected HashSet<ClientListener> listeners = new HashSet<>();
 
 	/**
 	 * Empty constructor.
 	 */
-	public AbstractServer() {
+	public AbstractClient() {
 
+	}
+
+	@Override
+	public Future<Boolean> send(final Message msg) {
+		return send(msg, Priority.NORMAL);
+	}
+
+	@Override
+	public Future<Boolean> send(final Message msg, final Priority priority) {
+		return getConnection().send(msg, priority);
+	}
+
+	@Override
+	public void addListener(final ClientListener listener) {
+		synchronized (listeners) {
+			listeners.add(listener);
+		}
+	}
+
+	@Override
+	public void removeListener(final ClientListener listener) {
+		synchronized (listeners) {
+			listeners.remove(listener);
+		}
 	}
 
 	@Override
@@ -75,7 +101,7 @@ public abstract class AbstractServer implements Server, ConnectionManager {
 		boolean accepted = true;
 
 		// lets check the message by all listeners
-		for (ServerListener listener : listeners) {
+		for (ClientListener listener : listeners) {
 			// if returned false, set return to false
 			if (!listener.newMessage(msg, con)) {
 				accepted = false;
@@ -84,32 +110,5 @@ public abstract class AbstractServer implements Server, ConnectionManager {
 
 		return accepted;
 	}
-
-	@Override
-	public void broadcast(final Message msg) {
-		// if the transport layer supports a better method like a native
-		// broadcast override this method and use it.
-
-		// forward message to all nodes.
-		for (NodeConnection nc : getNodes()) {
-			nc.send(msg);
-		}
-	}
-
-	@Override
-	public void addListener(final ServerListener listener) {
-		synchronized (listeners) {
-			listeners.add(listener);
-		}
-	}
-
-	@Override
-	public void removeListener(final ServerListener listener) {
-		synchronized (listeners) {
-			listeners.remove(listener);
-		}
-	}
-
-
 
 }

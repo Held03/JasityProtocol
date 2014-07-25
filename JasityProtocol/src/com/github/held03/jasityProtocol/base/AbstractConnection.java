@@ -53,6 +53,14 @@ public abstract class AbstractConnection implements Connection {
 
 	/**
 	 * The set of all registered connection listeners.
+	 * <p>
+	 * This field should be synchronized if accessed. Like:
+	 * 
+	 * <pre>
+	 * synchronized (messageListeners) {
+	 * 	// access or edit list ...
+	 * }
+	 * </pre>
 	 */
 	protected HashSet<ListenerContainer> messageListeners = new HashSet<>();
 

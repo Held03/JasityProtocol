@@ -69,7 +69,8 @@ public interface ClientListener {
 	 * The default should be <code>true</code>, if used with the listeners.
 	 * 
 	 * @param msg the new message to accept
+	 * @param con the node from which the message was received
 	 * @return <code>true</code> if the given message was accepted
 	 */
-	public boolean newMessage(Message msg);
+	public boolean newMessage(Message msg, NodeConnection con);
 }
