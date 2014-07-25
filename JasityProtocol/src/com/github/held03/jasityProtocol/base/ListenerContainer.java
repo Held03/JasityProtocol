@@ -133,7 +133,7 @@ public class ListenerContainer {
 
 			if (!returning.equals(Boolean.class)) {
 				// if not warn and go on with the next one
-				Logger.getLogger(AbstractConnection.class.getName()).log(
+				Logger.getLogger(ListenerContainer.class.getName()).log(
 						Level.FINE,
 						"A method ({5}) was added makred as listener, but it has the worong return value {2},"
 								+ " expect {3}! For object {1}",
@@ -156,7 +156,7 @@ public class ListenerContainer {
 			// any other configuration are rejected!
 			else {
 				// warn and go on with the next one
-				Logger.getLogger(AbstractConnection.class.getName()).log(
+				Logger.getLogger(ListenerContainer.class.getName()).log(
 						Level.FINE,
 						"A method ({5}) was added makred as listener, but it has the worong return value {2},"
 								+ " expect {3}! For object {1}",

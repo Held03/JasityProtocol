@@ -103,8 +103,7 @@ public interface Connection {
 	 * Therefore the implementation needs to process such a test before adding
 	 * the listener. It is recommended for the implementation to give out a
 	 * warning (do NOT throw an exception) if a method has the
-	 * {@link JPListener} annotation, but do not match the other
-	 * precondition.
+	 * {@link JPListener} annotation, but do not match the other precondition.
 	 * <p>
 	 * To perform this check and generate the {@link ListenerContainer}s, the
 	 * {@link ListenerContainer#getListeners(Object)} method can be used.
@@ -148,5 +147,11 @@ public interface Connection {
 	 */
 	public List<NodeConnection> getRelatedNodes();
 
-	//TODO add filters!
+	/**
+	 * Indicate if the connection is on the server side.
+	 * 
+	 * @return <code>true</code> if this is the server end of a connection,
+	 *         <code>false</code> if client end.
+	 */
+	public boolean isOnServerSide();
 }

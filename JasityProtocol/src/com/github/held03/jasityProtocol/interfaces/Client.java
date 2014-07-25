@@ -63,9 +63,26 @@ public interface Client {
 	 * to abort it. Also the Future object informs if the transfer was
 	 * successfully or not.
 	 * 
+	 * @see #send(Message,
+	 *      com.github.held03.jasityProtocol.interfaces.Message.Priority)
+	 * @param msg the message to send
 	 * @return a tracking object
 	 */
 	public Future<Boolean> send(Message msg);
+
+	/**
+	 * Send a message to the server.
+	 * <p>
+	 * With the Future object it is possible to check if the message is sent and
+	 * to abort it. Also the Future object informs if the transfer was
+	 * successfully or not.
+	 * 
+	 * @see #send(Message)
+	 * @param msg the message to send
+	 * @param priority the priority of the message
+	 * @return a tracking object
+	 */
+	public Future<Boolean> send(Message msg, Message.Priority priority);
 
 	/**
 	 * Gets the underlying connection of the client.
