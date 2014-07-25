@@ -26,9 +26,12 @@
 
 package com.github.held03.jasityProtocol.interfaces;
 
+import java.util.concurrent.Future;
+
+
 /**
- * Manage the general connections and organization of the connection to the server.
- * <p/>
+ * Manage the general connections and organization of the connection to the
+ * server.
  * 
  * @author held03
  */
@@ -36,29 +39,36 @@ public interface Client {
 
 	/**
 	 * Starts a client.
-	 * <p/>
+	 * <p>
 	 * This means that the client connects to the server.
-	 * <p/>
-	 * Notice that this will only work on a new client instance. If it was already stated, this method will fail, also
-	 * if it was stopped with {@link #stopConnection()}.
+	 * <p>
+	 * Notice that this will only work on a new client instance. If it was
+	 * already stated, this method will fail, also if it was stopped with
+	 * {@link #stopConnection()}.
 	 */
 	public void startConnection();
 
 	/**
 	 * Stops the client.
-	 * <p/>
-	 * This will break the connection to the server, all related threads are interrupted.
+	 * <p>
+	 * This will break the connection to the server, all related threads are
+	 * interrupted.
 	 */
 	public void stopConnection();
 
 	/**
 	 * Send a message to the server.
+	 * <p>
+	 * With the Future object it is possible to check if the message is sent and
+	 * to abort it. Also the Future object informs if the transfer was
+	 * successfully or not.
+	 * 
+	 * @return a tracking object
 	 */
-	public void send(Message msg);
+	public Future<Boolean> send(Message msg);
 
 	/**
 	 * Gets the underlying connection of the client.
-	 * <p/>
 	 * 
 	 * @return the local connection
 	 */
@@ -66,7 +76,6 @@ public interface Client {
 
 	/**
 	 * Adds a listener for this client.
-	 * <p/>
 	 * 
 	 * @param listener the listener to add
 	 */
@@ -74,7 +83,6 @@ public interface Client {
 
 	/**
 	 * Removes a listener from this client.
-	 * <p/>
 	 * 
 	 * @param listener the listener to remove
 	 */

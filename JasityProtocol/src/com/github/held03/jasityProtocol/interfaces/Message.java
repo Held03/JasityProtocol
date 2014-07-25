@@ -28,7 +28,6 @@ package com.github.held03.jasityProtocol.interfaces;
 
 /**
  * This represents a transferable message.
- * <p/>
  * 
  * @author held03
  */

@@ -26,12 +26,12 @@
 
 package com.github.held03.jasityProtocol.interfaces;
 
-import java.util.List;
+import java.util.Set;
 
 
 /**
- * Manage the general connections and organization of the connections to the clients.
- * <p/>
+ * Manage the general connections and organization of the connections to the
+ * clients.
  * 
  * @author held03
  */
@@ -39,18 +39,20 @@ public interface Server {
 
 	/**
 	 * Starts the server.
-	 * <p/>
+	 * <p>
 	 * This means that the server starts listening on the server port.
-	 * <p/>
-	 * Notice that this will only work on a new server instance. If it was already stated, this method will fail, also
-	 * if it was stopped with {@link #stopConnection()}.
+	 * <p>
+	 * Notice that this will only work on a new server instance. If it was
+	 * already stated, this method will fail, also if it was stopped with
+	 * {@link #stopConnection()}.
 	 */
 	public void startConnection();
 
 	/**
 	 * Stops the server.
-	 * <p/>
-	 * This will break all connections to the server, all related threads are interrupted.
+	 * <p>
+	 * This will break all connections to the server, all related threads are
+	 * interrupted.
 	 */
 	public void stopConnection();
 
@@ -61,15 +63,15 @@ public interface Server {
 
 	/**
 	 * Gets all connections to clients.
-	 * <p/>
+	 * <p>
 	 * 
 	 * @return a list of all connection nodes
 	 */
-	public List<NodeConnection> getNodes();
+	public Set<NodeConnection> getNodes();
 
 	/**
 	 * Adds a listener for this server.
-	 * <p/>
+	 * <p>
 	 * 
 	 * @param listener the listener to add
 	 */
@@ -77,7 +79,7 @@ public interface Server {
 
 	/**
 	 * Removes a listener from this server.
-	 * <p/>
+	 * <p>
 	 * 
 	 * @param listener the listener to remove
 	 */

@@ -32,7 +32,7 @@
  * <p>
  * For a working usage it needs to implement the {@link com.github.held03.jasityProtocol.interfaces.ClientListener},
  * {@link com.github.held03.jasityProtocol.interfaces.ServerListener} and some {@link com.github.held03.jasityProtocol.interfaces.Message}s.
- * Additional it is possible to use the {@link com.github.held03.jasityProtocol.interfaces.JUBP2Listener} annotation to
+ * Additional it is possible to use the {@link com.github.held03.jasityProtocol.interfaces.JPListener} annotation to
  * create message listeners.
  * <p>
  * The other interfaces represents the server client system which is implemented by this library,
