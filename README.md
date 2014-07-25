@@ -1,11 +1,8 @@
-JasityProtocol
-==============
+![JasityProtocol](Jasity_Logo800.png)
 
-![JasityProtocol Logo](Jasity_Logo.png)
+The JasityProtocol is a java library to provide simple client-server networking
 
-Java library to provide simple client-server networking
-
-See the [main folder](https://github.com/Held03/JasityProtocol/tree/master/JasityProtocol).
+See the [main folder](https://github.com/Held03/JasityProtocol/tree/master/JasityProtocol) for more inforations.
 
 ### Getting source
 
