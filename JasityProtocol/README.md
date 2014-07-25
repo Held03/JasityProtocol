@@ -16,8 +16,8 @@ in the [README](../README.md) of the repository (one folder up), or use one of t
 downloads (not yet available).
 
 Additional, you will found some more information about what you need to implement
-in the package description of the 
-[com.github.held03.jasityProtocol.interfaces](src/com/github/held03/jasitiyProtocol/interfaces/package-info.java)
+in the package description of the
+[com.github.held03.jasityProtocol.interfaces](src/com/github/held03/jasityProtocol/interfaces/package-info.java)
 package.
 
 ### Technology Stack
@@ -39,5 +39,6 @@ For eclipse there is a project specific formatter added, use it before committin
 
 ### License
 
-Apache License Version 2.0, January 2004
+Apache License, Version 2.0, January 2004
+
 [See license](LICENSE)
