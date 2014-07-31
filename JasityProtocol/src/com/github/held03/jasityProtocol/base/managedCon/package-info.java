@@ -24,47 +24,10 @@
  *
  */
 
-package com.github.held03.jasityProtocol.udp;
+/**
+ * 
+ * @author held03
+ *
+ */
 
-import com.github.held03.jasityProtocol.interfaces.Message;
-import com.github.held03.jasityProtocol.interfaces.Server;
-import com.github.held03.jasityProtocol.interfaces.ServerListener;
-
-
-public class UDPServer implements Server {
-
-	public UDPServer() {
-		// TODO Auto-generated constructor stub
-	}
-
-	@Override
-	public void startConnection() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void stopConnection() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void broadcast(final Message msg) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void addListener(final ServerListener listener) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void removeListener(final ServerListener listener) {
-		// TODO Auto-generated method stub
-
-	}
-
-}
+package com.github.held03.jasityProtocol.base.managedCon;

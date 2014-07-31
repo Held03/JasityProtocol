@@ -33,11 +33,13 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.github.held03.jasityProtocol.interfaces.Client;
 import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.ConnectionManager;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
 import com.github.held03.jasityProtocol.interfaces.NodeConnection;
+import com.github.held03.jasityProtocol.interfaces.Server;
 
 
 /**
@@ -72,10 +74,24 @@ public abstract class AbstractConnection implements Connection {
 	protected ConnectionManager manager;
 
 	/**
+	 * Indicates if this connection is running on server-side.
+	 * <p>
+	 * If this is <code>true</code> the connection is hosted on a server. If
+	 * this is <code>false</code> the connection is hosted on a client.
+	 */
+	protected boolean isServerSide;
+
+	/**
 	 * Normal constructor.
 	 */
 	public AbstractConnection(final ConnectionManager manager) {
 		this.manager = manager;
+
+		if (manager instanceof Server) {
+			isServerSide = true;
+		} else if (manager instanceof Client) {
+			isServerSide = false;
+		}
 
 	}
 
@@ -225,6 +241,11 @@ public abstract class AbstractConnection implements Connection {
 		} else {
 			//manager reject message
 		}
+	}
+
+	@Override
+	public boolean isOnServerSide() {
+		return isServerSide;
 	}
 
 }

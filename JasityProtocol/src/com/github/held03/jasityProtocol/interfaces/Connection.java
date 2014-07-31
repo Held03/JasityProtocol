@@ -52,7 +52,7 @@ public interface Connection {
 	public void close();
 
 	/**
-	 * Gets the calculated ping time.
+	 * Gets the calculated ping time in seconds.
 	 * <p>
 	 * This didn't send any ping. It returns the average ping time.
 	 * <p>

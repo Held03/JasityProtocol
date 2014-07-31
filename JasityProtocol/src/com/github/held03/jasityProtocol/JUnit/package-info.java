@@ -23,48 +23,13 @@
  *     https://github.com/Held03/JasityProtocol.git
  *
  */
+/**
+ * Test routine for this Project.
+ * <p>
+ * IMPORTANT: This is never needed for a application,
+ * and should NOT be contained in any binary export.
+ * 
+ * @author held03
+ */
 
-package com.github.held03.jasityProtocol.udp;
-
-import com.github.held03.jasityProtocol.interfaces.Message;
-import com.github.held03.jasityProtocol.interfaces.Server;
-import com.github.held03.jasityProtocol.interfaces.ServerListener;
-
-
-public class UDPServer implements Server {
-
-	public UDPServer() {
-		// TODO Auto-generated constructor stub
-	}
-
-	@Override
-	public void startConnection() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void stopConnection() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void broadcast(final Message msg) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void addListener(final ServerListener listener) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void removeListener(final ServerListener listener) {
-		// TODO Auto-generated method stub
-
-	}
-
-}
+package com.github.held03.jasityProtocol.JUnit;

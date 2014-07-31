@@ -78,7 +78,7 @@ public interface Filter {
 	 * @param buffer the package to edit
 	 * @return the changed buffer
 	 */
-	public ByteBuffer apply(ByteBuffer buffer);
+	public ByteBuffer apply(ByteBuffer buffer, Message msg);
 
 	/**
 	 * Restores the changes of this filter on the given message bytes.
