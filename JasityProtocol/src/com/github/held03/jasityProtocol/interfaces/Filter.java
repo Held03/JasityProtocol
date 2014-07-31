@@ -84,12 +84,13 @@ public interface Filter {
 	 * Restores the changes of this filter on the given message bytes.
 	 * <p>
 	 * This method has to restore the changes of {@link #apply(ByteBuffer)}
-	 * method. Following must be valid, if <code>buffer</code> is a ByteBuffer:
+	 * method. Following must be valid, if <code>buffer</code> is a ByteBuffer
+	 * and <code>msg</code> a Message:
 	 * 
 	 * <pre>
 	 * original = buffer.clone();
-	 * apply(buffer);
-	 * restore(buffer);
+	 * buffer = apply(buffer, msg);
+	 * buffer = restore(buffer);
 	 * assert buffer.equals(original) == true;
 	 * </pre>
 	 * 

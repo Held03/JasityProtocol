@@ -58,6 +58,9 @@ public interface Connection {
 	 * <p>
 	 * The period of time within the ping time is collected can vary, but should
 	 * be below 5 minutes.
+	 * <p>
+	 * If no ping time was available, it is recommended to return
+	 * <code>10s</code>, but this depends on the implementation.
 	 * 
 	 * @return the average ping time
 	 */
