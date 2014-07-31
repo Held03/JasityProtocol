@@ -55,6 +55,8 @@ public class ManagedConnection extends AbstractConnection implements Connection 
 
 	/**
 	 * Time to keep the pings in milliseconds.
+	 * <p>
+	 * default value: 5 minutes = 300_000
 	 */
 	protected long holdPings = 5 * 60 * 1000;
 
@@ -117,6 +119,32 @@ public class ManagedConnection extends AbstractConnection implements Connection 
 			}
 
 			return summe / pings.size();
+		}
+	}
+
+	/**
+	 * Gets count of ping used to get ping time.
+	 * <p>
+	 * This method returns how many ping were sent during {@link #holdPings}
+	 * time. This is also the count of ping times used to generate the
+	 * {@link #getPingTime()}
+	 * <p>
+	 * {@link #setPingHold(long)} can change the the time range the pings are
+	 * collected. If too less pings are use the {@link #holdPings} time can be
+	 * increased. If too many pings are use the {@link #holdPings} time can be
+	 * decreased.
+	 * 
+	 * @see #setPingHold(long)
+	 * @see #getPingHold()
+	 * @return
+	 */
+	public int getPingSignificans() {
+
+		synchronized (pings) {
+			// remove all entries older than hold time
+			removeBefore(pings, System.currentTimeMillis() - holdPings);
+
+			return pings.size();
 		}
 	}
 
