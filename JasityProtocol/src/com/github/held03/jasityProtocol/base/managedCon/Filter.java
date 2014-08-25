@@ -24,9 +24,12 @@
  *
  */
 
-package com.github.held03.jasityProtocol.interfaces;
+package com.github.held03.jasityProtocol.base.managedCon;
 
 import java.nio.ByteBuffer;
+
+import com.github.held03.jasityProtocol.interfaces.Message;
+import com.github.held03.jasityProtocol.interfaces.NodeConnection;
 
 
 /**
@@ -34,7 +37,7 @@ import java.nio.ByteBuffer;
  * <p>
  * This can be used for example to add a compression or a encryption to a
  * connection. It always relates to a single {@link NodeConnection}. So that it
- * exist one instance on server side an one on client side.
+ * exist one instance on server side an one on client side for each connection.
  * 
  * @author held03
  */
@@ -78,7 +81,7 @@ public interface Filter {
 	 * @param buffer the package to edit
 	 * @return the changed buffer
 	 */
-	public ByteBuffer apply(ByteBuffer buffer, Message msg);
+	public ByteBuffer apply(ByteBuffer buffer, MessageLabel msg);
 
 	/**
 	 * Restores the changes of this filter on the given message bytes.

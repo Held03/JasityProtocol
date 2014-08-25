@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.Future;
 
 import com.github.held03.jasityProtocol.base.ListenerContainer;
+import com.github.held03.jasityProtocol.base.managedCon.Filter;
 
 
 /**
@@ -152,38 +153,6 @@ public interface NodeConnection {
 	public Future<Boolean> send(Message message, Message.Priority priority);
 
 	/**
-	 * Adds a listener object for this node.
-	 * <p>
-	 * The added listener will be only invoked if an message arrives for this
-	 * NodeConnection.
-	 * <p>
-	 * This method will check all methods of the given object to match the
-	 * precondition described in {@link JPListener}. If any found, it will be
-	 * added to the connection. If more found they are added individual. If no
-	 * one found it will return without adding anything.
-	 * <p>
-	 * Therefore the implementation needs to process such a test before adding
-	 * the listener. It is recommended for the implementation to give out a
-	 * warning (do NOT throw an exception) if a method has the
-	 * {@link JPListener} annotation, but do not match the other precondition.
-	 * <p>
-	 * To perform this check and generate the {@link ListenerContainer}s, the
-	 * {@link ListenerContainer#getListeners(Object)} method can be used.
-	 * 
-	 * @param listener the listener to add
-	 */
-	public void addListener(Object listener);
-
-	/**
-	 * Removes a listener from this node.
-	 * <p>
-	 * Removes all listener of the given object.
-	 * 
-	 * @param listener the listener to remove
-	 */
-	public void removeListener(Object listener);
-
-	/**
 	 * Gets added listeners of this node.
 	 * <p>
 	 * This gets all listeners add to this NodeConnection.
@@ -205,14 +174,6 @@ public interface NodeConnection {
 	 * @return the local state of the connection
 	 */
 	public State getState();
-
-	/**
-	 * Filter callback if ready to use.
-	 * <p>
-	 * This must be called from every filter before this NodeConnection gets
-	 * ready for use.
-	 */
-	public void filterInitiated(Filter filter);
 
 	/**
 	 * Adds a filter to this node.

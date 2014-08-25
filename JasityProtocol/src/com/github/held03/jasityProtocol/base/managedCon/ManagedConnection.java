@@ -66,6 +66,12 @@ public class ManagedConnection extends AbstractConnection implements Connection 
 	protected HashSet<TimedValue<Float>> load = new HashSet<>();
 
 	/**
+	 * Size of a transmitting block.
+	 */
+	protected long blockSize;
+
+
+	/**
 	 * Creates a new ManagedConnection.
 	 */
 	public ManagedConnection(final ConnectionManager conMan) {
