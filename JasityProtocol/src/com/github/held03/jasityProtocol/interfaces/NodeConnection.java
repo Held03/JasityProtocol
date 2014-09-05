@@ -26,13 +26,10 @@
 
 package com.github.held03.jasityProtocol.interfaces;
 
-import java.net.InetAddress;
-import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.Future;
 
 import com.github.held03.jasityProtocol.base.ListenerContainer;
-import com.github.held03.jasityProtocol.base.managedCon.Filter;
 
 
 /**
@@ -95,26 +92,12 @@ public interface NodeConnection {
 	}
 
 	/**
-	 * Gets the Internet address of the remote node.
-	 * <p>
-	 * Notice that this is NOT a unique identifier for this node, due it is
-	 * possible that multiple nodes can connect to local node from the same
-	 * address.
-	 * 
-	 * @return the Internet address
-	 */
-	public InetAddress getInetAddress();
-
-
-	/**
-	 * Gets the socket address of the node.
-	 * <p>
-	 * If the underlying system supports no socket address this method will
-	 * return <code>null</code>.
+	 * Gets the remote identity of the node.
 	 * 
 	 * @return the socket address
+	 * @see
 	 */
-	public SocketAddress getSocketAddress();
+	public NodeIdentity getIdentity();
 
 
 	/**
@@ -153,6 +136,38 @@ public interface NodeConnection {
 	public Future<Boolean> send(Message message, Message.Priority priority);
 
 	/**
+	 * Adds a listener object for this node.
+	 * <p>
+	 * The added listener will be only invoked if an message arrives for this
+	 * NodeConnection.
+	 * <p>
+	 * This method will check all methods of the given object to match the
+	 * precondition described in {@link JPListener}. If any found, it will be
+	 * added to the connection. If more found they are added individual. If no
+	 * one found it will return without adding anything.
+	 * <p>
+	 * Therefore the implementation needs to process such a test before adding
+	 * the listener. It is recommended for the implementation to give out a
+	 * warning (do NOT throw an exception) if a method has the
+	 * {@link JPListener} annotation, but do not match the other precondition.
+	 * <p>
+	 * To perform this check and generate the {@link ListenerContainer}s, the
+	 * {@link ListenerContainer#getListeners(Object)} method can be used.
+	 * 
+	 * @param listener the listener to add
+	 */
+	public void addListener(final Object listener);
+
+	/**
+	 * Removes a listener from this node.
+	 * <p>
+	 * Removes all listener of the given object.
+	 * 
+	 * @param listener the listener to remove
+	 */
+	public void removeListener(final Object listener);
+
+	/**
 	 * Gets added listeners of this node.
 	 * <p>
 	 * This gets all listeners add to this NodeConnection.
@@ -174,34 +189,5 @@ public interface NodeConnection {
 	 * @return the local state of the connection
 	 */
 	public State getState();
-
-	/**
-	 * Adds a filter to this node.
-	 * <p>
-	 * A filter will modify every message passed by this connection for
-	 * transmitting. After receiving the filters will restore the changes that
-	 * the messages can be parsed.
-	 * <p>
-	 * This is useful for encryption or compression.
-	 * <p>
-	 * Every filter gets an order number for this connection. This is important
-	 * to restore the filters in the exactly reveres order they are applied.
-	 * <p>
-	 * The filter with the lowest number will be applied first and restored
-	 * last.
-	 * 
-	 * @see #removeFilter(Filter)
-	 * @param filter the filter to add
-	 * @param the order of the filter
-	 */
-	public void addFilter(Filter filter, long order);
-
-	/**
-	 * Removes a filter from this node.
-	 * 
-	 * @see #addFilter(Filter, long)
-	 * @param filter
-	 */
-	public void removeFilter(Filter filter);
 
 }

@@ -27,12 +27,16 @@
 package com.github.held03.jasityProtocol.base.managedCon;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import com.github.held03.jasityProtocol.base.AbstractConnection;
 import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.ConnectionManager;
+import com.github.held03.jasityProtocol.interfaces.Message;
 import com.github.held03.jasityProtocol.interfaces.NodeConnection;
 
 
@@ -69,6 +73,36 @@ public class ManagedConnection extends AbstractConnection implements Connection 
 	 * Size of a transmitting block.
 	 */
 	protected long blockSize;
+
+	/**
+	 * Coder to code messages into binary form.
+	 */
+	protected MessageCoder coder;
+
+	/**
+	 * Messages under transmission or waiting for it.
+	 * <p>
+	 * All these messages are already preprocessed (see {@link #waiting}).
+	 */
+	protected LinkedBlockingQueue<MessageLabel> preprocessed = new LinkedBlockingQueue<MessageLabel>();
+
+	/**
+	 * New messages.
+	 * <p>
+	 * These messages are waiting for preprocessing. The preprocessing is the
+	 * coding of the message into the binary from and the applying of the
+	 * filters onto it.
+	 */
+	protected LinkedBlockingQueue<MessageLabel> waiting = new LinkedBlockingQueue<MessageLabel>();
+
+	/**
+	 * Already written messages.
+	 * <p>
+	 * These are waiting for the acknowledge of the message through the remote
+	 * connection. If done the message will leave this list. If not it will be
+	 * resent.
+	 */
+	protected LinkedList<MessageLabel> written = new LinkedList<MessageLabel>();
 
 
 	/**
@@ -268,6 +302,18 @@ public class ManagedConnection extends AbstractConnection implements Connection 
 	@Override
 	public List<NodeConnection> getRelatedNodes() {
 		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * Sends a message over this connection.
+	 * 
+	 * @param msg the message to send
+	 * @param node the node to send to
+	 * @return the tracking object
+	 */
+	public Future<Boolean> sendMessage(final Message msg, final NodeConnection node) {
+
 		return null;
 	}
 

@@ -24,48 +24,34 @@
  *
  */
 
-package com.github.held03.jasityProtocol.udp;
+package com.github.held03.jasityProtocol.interfaces;
 
-import java.util.Set;
-
-import com.github.held03.jasityProtocol.base.AbstractServer;
-import com.github.held03.jasityProtocol.interfaces.NodeConnection;
+import java.net.InetAddress;
 
 
-public class UDPServer extends AbstractServer {
+/**
+ * Unique identity for a {@link NodeConnection}.
+ * <p>
+ * This class identify a node base on its remote address and on its underlying
+ * protocol.
+ * <p>
+ * It is recommended that every transport has its own implementation of this
+ * identity.
+ * <p>
+ * For TCP this identity will consist of the IP address and the port.
+ * 
+ * @author held03
+ */
+public interface NodeIdentity {
 
-	public UDPServer() {
-		// TODO Auto-generated constructor stub
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see com.github.held03.jasityProtocol.interfaces.Server#getNodes()
+	/**
+	 * Gets the Internet address of the remote node.
+	 * <p>
+	 * Notice that this is NOT a unique identifier for this node, due it is
+	 * possible that multiple nodes can connect to local node from the same IP
+	 * address.
+	 * 
+	 * @return the Internet address
 	 */
-	@Override
-	public Set<NodeConnection> getNodes() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see com.github.held03.jasityProtocol.interfaces.Server#startConnection()
-	 */
-	@Override
-	public void startConnection() {
-		// TODO Auto-generated method stub
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see com.github.held03.jasityProtocol.interfaces.Server#stopConnection()
-	 */
-	@Override
-	public void stopConnection() {
-		// TODO Auto-generated method stub
-
-	}
-
+	public InetAddress getInetAddress();
 }

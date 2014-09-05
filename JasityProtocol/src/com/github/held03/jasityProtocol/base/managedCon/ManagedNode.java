@@ -26,17 +26,17 @@
 
 package com.github.held03.jasityProtocol.base.managedCon;
 
-import java.net.InetAddress;
-import java.net.SocketAddress;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.Future;
 
 import com.github.held03.jasityProtocol.base.ListenerContainer;
 import com.github.held03.jasityProtocol.interfaces.Connection;
-import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
 import com.github.held03.jasityProtocol.interfaces.Message.Priority;
 import com.github.held03.jasityProtocol.interfaces.NodeConnection;
+import com.github.held03.jasityProtocol.interfaces.NodeIdentity;
 
 
 /**
@@ -45,68 +45,122 @@ import com.github.held03.jasityProtocol.interfaces.NodeConnection;
 public class ManagedNode implements NodeConnection {
 
 	/**
-	 * 
+	 * All registered filters of this node.
 	 */
-	public ManagedNode() {
+	LinkedList<Filter> filters = new LinkedList<Filter>();
+
+	/**
+	 * All listeners registered to this node.
+	 */
+	HashSet<ListenerContainer> listeners = new HashSet<ListenerContainer>();
+
+	/**
+	 * The related connection of this node.
+	 */
+	ManagedConnection connection;
+
+	/**
+	 * The specific ID of this connection.
+	 */
+	NodeIdentity id;
+
+	/**
+	 * The current state of the node.
+	 */
+	State status = State.PRE_CONNECTION;
+
+	/**
+	 * Creates a simple unconnected node.
+	 */
+	public ManagedNode(final ManagedConnection connection) {
 		// TODO Auto-generated constructor stub
 	}
 
-	/**
-	 * Adds a listener object for this node.
-	 * <p>
-	 * The added listener will be only invoked if an message arrives for this
-	 * NodeConnection.
-	 * <p>
-	 * This method will check all methods of the given object to match the
-	 * precondition described in {@link JPListener}. If any found, it will be
-	 * added to the connection. If more found they are added individual. If no
-	 * one found it will return without adding anything.
-	 * <p>
-	 * Therefore the implementation needs to process such a test before adding
-	 * the listener. It is recommended for the implementation to give out a
-	 * warning (do NOT throw an exception) if a method has the
-	 * {@link JPListener} annotation, but do not match the other precondition.
-	 * <p>
-	 * To perform this check and generate the {@link ListenerContainer}s, the
-	 * {@link ListenerContainer#getListeners(Object)} method can be used.
-	 * 
-	 * @param listener the listener to add
-	 */
+	@Override
 	public void addListener(final Object listener) {
+		listeners.addAll(ListenerContainer.getListeners(listener));
+	}
+
+	@Override
+	public void removeListener(final Object listener) {
+		listeners.removeAll(getListenersOfObject(listener));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.github.held03.jasityProtocol.interfaces.NodeConnection#getListeners()
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<ListenerContainer> getListeners() {
+		return (Set<ListenerContainer>) listeners.clone();
 	}
 
 	/**
-	 * Removes a listener from this node.
-	 * <p>
-	 * Removes all listener of the given object.
+	 * Gets the registered listeners of the given listener object.
 	 * 
-	 * @param listener the listener to remove
+	 * @param o the object to get the listeners of
+	 * @return the listeners
 	 */
-	public void removeListener(final Object listener) {
+	public Set<ListenerContainer> getListenersOfObject(final Object o) {
+		HashSet<ListenerContainer> results = new HashSet<ListenerContainer>();
+
+		for (ListenerContainer cont : listeners) {
+			// Notice: it must be exactly the same instance and
+			// NOT only have the same content like checked with equals() 
+			if (cont.object == o) // do NOT use equals()
+				results.add(cont);
+		}
+
+		return results;
+	}
+
+
+	/**
+	 * Gets the listeners of a specific message.
+	 * <p>
+	 * This returns all the listeners of this node which have to be called if
+	 * the given message was received.
+	 * 
+	 * @param m the message to get the listeners for
+	 * @return the listeners of the given message
+	 */
+	public Set<ListenerContainer> getListenersOfMessage(final Message m) {
+		return getListenersOfMessage(m.getClass());
+	}
+
+	/**
+	 * Gets the listeners of a specific message class.
+	 * <p>
+	 * This returns all the listeners of this node which have to be called if
+	 * the given type of message was received.
+	 * 
+	 * @param c the class to get the listeners for
+	 * @return the listeners of the given class
+	 */
+	public Set<ListenerContainer> getListenersOfMessage(final Class<?> c) {
+		HashSet<ListenerContainer> results = new HashSet<ListenerContainer>();
+
+		for (ListenerContainer cont : listeners) {
+			// check if the given class is equals the listened type or
+			// if the given class is a sub class
+			if (cont.message.isAssignableFrom(c))
+				results.add(cont);
+		}
+
+		return results;
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * @see
-	 * com.github.held03.jasityProtocol.interfaces.NodeConnection#getInetAddress
+	 * com.github.held03.jasityProtocol.interfaces.NodeConnection#getIdentity
 	 * ()
 	 */
 	@Override
-	public InetAddress getInetAddress() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * com.github.held03.jasityProtocol.interfaces.NodeConnection#getSocketAddress
-	 * ()
-	 */
-	@Override
-	public SocketAddress getSocketAddress() {
-		// TODO Auto-generated method stub
-		return null;
+	public NodeIdentity getIdentity() {
+		return id;
 	}
 
 	/*
@@ -117,8 +171,7 @@ public class ManagedNode implements NodeConnection {
 	 */
 	@Override
 	public Connection getConnection() {
-		// TODO Auto-generated method stub
-		return null;
+		return connection;
 	}
 
 	/*
@@ -129,7 +182,6 @@ public class ManagedNode implements NodeConnection {
 	 */
 	@Override
 	public Future<Boolean> send(final Message message) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -149,47 +201,73 @@ public class ManagedNode implements NodeConnection {
 	/*
 	 * (non-Javadoc)
 	 * @see
-	 * com.github.held03.jasityProtocol.interfaces.NodeConnection#getListeners()
-	 */
-	@Override
-	public Set<ListenerContainer> getListeners() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see
 	 * com.github.held03.jasityProtocol.interfaces.NodeConnection#getState()
 	 */
 	@Override
 	public State getState() {
-		// TODO Auto-generated method stub
-		return null;
+		return status;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * com.github.held03.jasityProtocol.interfaces.NodeConnection#addFilter(
-	 * com.github.held03.jasityProtocol.base.managedCon.Filter, long)
+	/**
+	 * Adds a filter to this node.
+	 * <p>
+	 * A filter will modify every message passed by this connection for
+	 * transmitting. After receiving the filters will restore the changes that
+	 * the messages can be parsed.
+	 * <p>
+	 * This is useful for encryption or compression.
+	 * <p>
+	 * Every filter gets an index number for this connection. This is important
+	 * to restore the filters in the exactly reveres order they are applied.
+	 * <p>
+	 * The filter with the lowest index will be applied first and restored last.
+	 * <p>
+	 * This method adds the filter at the end of the list.
+	 * 
+	 * @see #removeFilter(Filter)
+	 * @param filter the filter to add
+	 * @param the order of the filter
 	 */
-	@Override
-	public void addFilter(final Filter filter, final long order) {
-		// TODO Auto-generated method stub
+	public void addFilter(final Filter filter) {
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * com.github.held03.jasityProtocol.interfaces.NodeConnection#removeFilter
-	 * (com.github.held03.jasityProtocol.base.managedCon.Filter)
+	/**
+	 * Adds a filter to this node.
+	 * <p>
+	 * A filter will modify every message passed by this connection for
+	 * transmitting. After receiving the filters will restore the changes that
+	 * the messages can be parsed.
+	 * <p>
+	 * This is useful for encryption or compression.
+	 * <p>
+	 * Every filter gets an index number for this connection. This is important
+	 * to restore the filters in the exactly reveres order they are applied.
+	 * <p>
+	 * The filter with the lowest index will be applied first and restored last.
+	 * <p>
+	 * This method adds the filter at the specific index. If there was already a
+	 * entry that old one will be shifted down to the end of the list as well as
+	 * all following entries. If the given index is far out of the boundary of
+	 * the list it will be added to the end.
+	 * 
+	 * @see #removeFilter(Filter)
+	 * @param filter the filter to add
+	 * @param the order of the filter
 	 */
-	@Override
+	public void addFilter(final Filter filter, final int index) {
+
+	}
+
+	/**
+	 * Removes a filter from this node.
+	 * 
+	 * @see #addFilter(Filter, long)
+	 * @param filter
+	 */
 	public void removeFilter(final Filter filter) {
-		// TODO Auto-generated method stub
 
 	}
+
 
 }
