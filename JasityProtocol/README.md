@@ -2,7 +2,7 @@ JasityProtocol
 ==============
 
 The JasityProtocol provides a simple way to implement server-client
-connections over the network, e.g. LAN or Internet.
+protocol over IP, e.g. LAN or Internet.
 
 Notice that the project is at present in early development. Therefore, it is
 not possible to use it already.
@@ -27,6 +27,8 @@ package.
  
 ### Documentation
 
+See JavaDocs and source code.
+
 TODO
 
 ### Contributing
@@ -35,7 +37,7 @@ If you are interested to contribute, fork it, change it and send a pull request.
 Notice it is recommend to use eclipse IDE http://eclipse.org/
 
 About formatting: we use tabs for intent an no spaces.
-For eclipse there is a project specific formatter added, use it before committing.
+For eclipse there is a project specific formatter added, apply it before committing.
 
 ### License
 

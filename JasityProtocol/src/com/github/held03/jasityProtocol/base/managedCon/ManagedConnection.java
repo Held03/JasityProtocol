@@ -314,7 +314,17 @@ public class ManagedConnection extends AbstractConnection implements Connection 
 	 */
 	public Future<Boolean> sendMessage(final Message msg, final NodeConnection node) {
 
-		return null;
+		MessageLabel label = new MessageLabel(msg);
+
+		label.node = node;
+
+		if (node instanceof ManagedNode) {
+			label.queuedFilters.addAll( ((ManagedNode) node).filters);
+		}
+
+		waiting.add(label);
+
+		return label;
 	}
 
 	/**

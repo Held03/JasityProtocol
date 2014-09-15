@@ -72,8 +72,9 @@ public class ManagedNode implements NodeConnection {
 	/**
 	 * Creates a simple unconnected node.
 	 */
-	public ManagedNode(final ManagedConnection connection) {
-		// TODO Auto-generated constructor stub
+	public ManagedNode(final ManagedConnection connection, final NodeIdentity id) {
+		this.connection = connection;
+		this.id = id;
 	}
 
 	@Override
@@ -182,7 +183,7 @@ public class ManagedNode implements NodeConnection {
 	 */
 	@Override
 	public Future<Boolean> send(final Message message) {
-		return null;
+		return connection.sendMessage(message, this);
 	}
 
 	/*
@@ -194,8 +195,7 @@ public class ManagedNode implements NodeConnection {
 	 */
 	@Override
 	public Future<Boolean> send(final Message message, final Priority priority) {
-		// TODO Auto-generated method stub
-		return null;
+		return connection.sendMessage(message, this);
 	}
 
 	/*
@@ -229,34 +229,7 @@ public class ManagedNode implements NodeConnection {
 	 * @param the order of the filter
 	 */
 	public void addFilter(final Filter filter) {
-
-	}
-
-	/**
-	 * Adds a filter to this node.
-	 * <p>
-	 * A filter will modify every message passed by this connection for
-	 * transmitting. After receiving the filters will restore the changes that
-	 * the messages can be parsed.
-	 * <p>
-	 * This is useful for encryption or compression.
-	 * <p>
-	 * Every filter gets an index number for this connection. This is important
-	 * to restore the filters in the exactly reveres order they are applied.
-	 * <p>
-	 * The filter with the lowest index will be applied first and restored last.
-	 * <p>
-	 * This method adds the filter at the specific index. If there was already a
-	 * entry that old one will be shifted down to the end of the list as well as
-	 * all following entries. If the given index is far out of the boundary of
-	 * the list it will be added to the end.
-	 * 
-	 * @see #removeFilter(Filter)
-	 * @param filter the filter to add
-	 * @param the order of the filter
-	 */
-	public void addFilter(final Filter filter, final int index) {
-
+		filters.add(filter);
 	}
 
 	/**
@@ -266,7 +239,7 @@ public class ManagedNode implements NodeConnection {
 	 * @param filter
 	 */
 	public void removeFilter(final Filter filter) {
-
+		filters.remove(filter);
 	}
 
 

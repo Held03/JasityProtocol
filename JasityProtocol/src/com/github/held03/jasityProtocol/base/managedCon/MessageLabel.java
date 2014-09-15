@@ -26,8 +26,13 @@
 
 package com.github.held03.jasityProtocol.base.managedCon;
 
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.github.held03.jasityProtocol.interfaces.Message;
 import com.github.held03.jasityProtocol.interfaces.NodeConnection;
@@ -41,7 +46,7 @@ import com.github.held03.jasityProtocol.interfaces.NodeConnection;
  * 
  * @author held03
  */
-public class MessageLabel {
+public class MessageLabel implements Future<Boolean> {
 
 	/**
 	 * The node to send the message to.
@@ -51,12 +56,76 @@ public class MessageLabel {
 	/**
 	 * The binary data of the message.
 	 */
-	protected byte[] data;
+	protected ByteBuffer data;
 
 	/**
 	 * The message object.
 	 */
 	protected Message message;
+
+	protected boolean isDone;
+
+	protected boolean isCancelled;
+
+	@Override
+	public boolean isDone() {
+		return isDone;
+	}
+
+	@Override
+	public boolean isCancelled() {
+		return isCancelled;
+	}
+
+	@Override
+	public Boolean get(long val, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+		long time = 0;
+		int nano = 0;
+
+		switch (unit) {
+		case DAYS:
+			time = val * 24 * 3600 * 1000;
+			break;
+		case HOURS:
+			time = val * 3600 * 1000;
+			break;
+		case MINUTES:
+			time = val * 60 * 1000;
+			break;
+		case SECONDS:
+			time = val * 1000;
+			break;
+		case MILLISECONDS:
+			time = val;
+			break;
+		case MICROSECONDS:
+			time = val / 1000;
+			val -= time * 1000;
+			nano = (int) (val * 1000);
+			break;
+		case NANOSECONDS:
+			time = val / 1000 / 1000;
+			val -= time * 1000 * 1000;
+			nano = (int) (val);
+			break;
+		}
+
+
+		this.wait(time, nano);
+		return null;
+	}
+
+	@Override
+	public Boolean get() throws InterruptedException, ExecutionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean cancel(final boolean arg0) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 	/**
 	 * List of filters already applied to the binary message.
@@ -99,6 +168,22 @@ public class MessageLabel {
 	public MessageLabel(final Message msg, final List<Filter> filters) {
 		message = msg;
 		queuedFilters.addAll(filters);
+	}
+
+	/**
+	 * Applies all the queued filters.
+	 * <p>
+	 * This method applies the {@link #queuedFilters} onto this message.
+	 * <p>
+	 * After this call all entries of {@link #queuedFilters} will be moved to
+	 * {@link #appliedFilters}.
+	 */
+	public void applyFilters() {
+		Filter f;
+		while (queuedFilters.size() > 0 && (f = queuedFilters.remove(0)) != null) {
+			f.apply(data, this);
+			appliedFilters.add(f);
+		}
 	}
 
 }
