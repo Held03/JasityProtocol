@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
-import com.github.held03.jasityProtocol.interfaces.NodeConnection;
+import com.github.held03.jasityProtocol.interfaces.Node;
 
 
 /**
@@ -148,10 +148,9 @@ public class ListenerContainer {
 			// either it has one argument with a message
 			if (parameter.length == 1 && Message.class.isAssignableFrom(parameter[0]))
 				;
-			// or tow argument, first a message, second a nodeConnection
+			// or tow argument, first a message, second a node
 			else if (parameter.length == 2
-					&& (Message.class.isAssignableFrom(parameter[0]) && NodeConnection.class
-							.isAssignableFrom(parameter[1])))
+					&& (Message.class.isAssignableFrom(parameter[0]) && Node.class.isAssignableFrom(parameter[1])))
 				;
 			// any other configuration are rejected!
 			else {

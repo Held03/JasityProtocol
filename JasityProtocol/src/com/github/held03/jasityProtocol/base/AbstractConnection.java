@@ -33,12 +33,9 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.github.held03.jasityProtocol.interfaces.Client;
 import com.github.held03.jasityProtocol.interfaces.Connection;
-import com.github.held03.jasityProtocol.interfaces.ConnectionManager;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
-import com.github.held03.jasityProtocol.interfaces.NodeConnection;
 import com.github.held03.jasityProtocol.interfaces.Server;
 
 

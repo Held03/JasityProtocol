@@ -48,6 +48,14 @@ public interface Connection {
 	public void close();
 
 	/**
+	 * Check is the connection connected.
+	 * 
+	 * @return <code>true</code> if the connection is online, or
+	 *         <code>false</code> if it is disconnected
+	 */
+	public boolean isConnected();
+
+	/**
 	 * Gets the calculated ping time in seconds.
 	 * <p>
 	 * This didn't send any ping. It returns the average ping time.
