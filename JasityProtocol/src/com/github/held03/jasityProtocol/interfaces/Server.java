@@ -57,16 +57,16 @@ public interface Server {
 	public void stopConnection();
 
 	/**
-	 * Broadcasts a message to all clients.
+	 * Broadcasts a message to all nodes created by this server.
 	 */
 	public void broadcast(Message msg);
 
 	/**
-	 * Gets all connections to clients.
+	 * Gets all node created from this server.
 	 * 
 	 * @return a list of all connection nodes
 	 */
-	public Set<NodeConnection> getNodes();
+	public Set<Node> getNodes();
 
 	/**
 	 * Adds a listener for this server.

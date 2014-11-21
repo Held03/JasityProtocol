@@ -26,32 +26,12 @@
 
 package com.github.held03.jasityProtocol.interfaces;
 
-import java.net.InetAddress;
-
 
 /**
- * Unique identity for a {@link NodeConnection}.
- * <p>
- * This class identify a node base on its remote address and on its underlying
- * protocol.
- * <p>
- * It is recommended that every transport has its own implementation of this
- * identity.
- * <p>
- * For TCP this identity will consist of the IP address and the port.
+ * This represents a back end protocol.
  * 
  * @author held03
  */
-public interface NodeIdentity {
-
-	/**
-	 * Gets the Internet address of the remote node.
-	 * <p>
-	 * Notice that this is NOT a unique identifier for this node, due it is
-	 * possible that multiple nodes can connect to local node from the same IP
-	 * address.
-	 * 
-	 * @return the Internet address
-	 */
-	public InetAddress getInetAddress();
+public interface BackEnd {
+	//TODO
 }

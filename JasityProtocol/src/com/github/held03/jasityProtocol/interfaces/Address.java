@@ -26,36 +26,35 @@
 
 package com.github.held03.jasityProtocol.interfaces;
 
+
 /**
- * Allows the receiving of server related events.
+ * Am address to a node specific for a protocol.
  * <p>
- * This interface is important to implement to receive server events. It gives
- * the server the ability to communicate with the user program.
+ * This interface represents a protocol specific address.
+ * <p>
+ * Use {@link #equals(Object)} to check if to addresses point to the same node.
+ * <p>
+ * This interface has to be implemented by the back end.
  * 
  * @author held03
  */
-public interface ServerListener {
+public interface Address {
 
 	/**
-	 * New client connection to server.
+	 * Initiate a connection to the node.
 	 * <p>
-	 * This is invoked if a new client connects to this server.
-	 * <p>
-	 * The implementation indicate with the return value if the connected client
-	 * should be accepted or not. <code>true</code> indicates that the client is
-	 * accepted, <code>false</code> will break the connection to the client.
+	 * This method will block until the connection was established. If something
+	 * went wrong it throws an exception.
 	 * 
-	 * @param conn the new connection node
-	 * @return <code>true</code> if the given client was accepted
+	 * @return a new node connected to this address
 	 */
-	public boolean newNode(Node node);
+	public Node connectTo();
 
 	/**
-	 * The connection to a client was lost.
+	 * Gets the back end for which this address is specified.
 	 * <p>
-	 * This is invoked if the connection to a client breaks/ends anyhow.
 	 * 
-	 * @param conn the old connection node
+	 * @return the protocol this address uses
 	 */
-	public void nodeLost(Node node);
+	public BackEnd getBackEnd();
 }

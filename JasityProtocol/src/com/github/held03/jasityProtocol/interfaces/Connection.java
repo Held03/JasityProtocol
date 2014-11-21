@@ -27,19 +27,15 @@
 package com.github.held03.jasityProtocol.interfaces;
 
 import java.util.List;
-import java.util.Set;
-
-import com.github.held03.jasityProtocol.base.ListenerContainer;
 
 
 /**
  * A connection to a server or a client.
  * <p>
- * This could be once either a connection to a client or to a server. Anyway it
- * has the same functionality.
- * <p>
- * A connection is opened as construction. The class defines the real type of
- * the underlying system.
+ * This interface has to be implemented by the back end. It should check all
+ * related nodes by calling {@link Node#getNextBlock()} or
+ * {@link Node#getNextBlockDirectly()} on them. If some thing was received for a
+ * specific node, {@link Node#receivedBlock(byte[])} should be called on it.
  * <p>
  * 
  * @author held03
@@ -93,68 +89,10 @@ public interface Connection {
 	public float getConectionOutputLoad5();
 
 	/**
-	 * Adds a listener object for this connection.
+	 * Returns all related {@link Node}s.
 	 * <p>
-	 * These listeners will be only invoked if a message arrives for this
-	 * connection, but independent from the target NodeConnecton it has.
-	 * <p>
-	 * This method will check all methods of the given object to match the
-	 * precondition described in {@link JPListener}. If any found, it will be
-	 * added to the connection. If more found they are added individual. If no
-	 * one found it will return without adding anything.
-	 * <p>
-	 * Therefore the implementation needs to process such a test before adding
-	 * the listener. It is recommended for the implementation to give out a
-	 * warning (do NOT throw an exception) if a method has the
-	 * {@link JPListener} annotation, but do not match the other precondition.
-	 * <p>
-	 * To perform this check and generate the {@link ListenerContainer}s, the
-	 * {@link ListenerContainer#getListeners(Object)} method can be used.
 	 * 
-	 * @param listener the listener to add
+	 * @return list of nodes which communicates over this node
 	 */
-	public void addListener(Object listener);
-
-	/**
-	 * Removes a listener from this connection.
-	 * <p>
-	 * Removes all listener of the given object.
-	 * 
-	 * @param listener the listener to remove
-	 */
-	public void removeListener(Object listener);
-
-	/**
-	 * Gets added listeners.
-	 * <p>
-	 * This gets all listeners add to this connection. Notice that this will not
-	 * contain the listeners added to a single {@link NodeConnection} of this
-	 * connection.
-	 * <p>
-	 * The returned list should not be changed. Instant use
-	 * {@link #addListener(Object)} and {@link #removeListener(Object)}.
-	 * 
-	 * @return all listeners of this connection
-	 */
-	public Set<ListenerContainer> getListeners();
-
-	/**
-	 * Returns all related {@link NodeConnection}s.
-	 * <p>
-	 * For client side this should return only one NodeConnection.
-	 * <p>
-	 * For server side this should return all NodeConnection which sends and
-	 * receives over this connection.
-	 * 
-	 * @return
-	 */
-	public List<NodeConnection> getRelatedNodes();
-
-	/**
-	 * Indicate if the connection is on the server side.
-	 * 
-	 * @return <code>true</code> if this is the server end of a connection,
-	 *         <code>false</code> if client end.
-	 */
-	public boolean isOnServerSide();
+	public List<Node> getRelatedNodes();
 }

@@ -26,45 +26,47 @@
 
 package com.github.held03.jasityProtocol.interfaces;
 
+
 /**
- * Allows the receiving of client related events.
+ * Application base node listener.
  * <p>
- * This interface is important to implement to receive client events. It gives
- * the client the ability to communicate with the user program.
+ * This listener is formed to be used on application side. To the feedbacks
+ * about application interesting events.
  * 
  * @author held03
  */
-public interface ClientListener {
+public interface NodeListener {
 
 	/**
-	 * Established connection to server.
+	 * The connection to the remote was established.
 	 * <p>
-	 * This is invoked if the client established successfully a connection to a
-	 * server.
+	 * The node will call this if the connection to the remote node was
+	 * successfully established.
 	 * 
-	 * @return the established connection
+	 * @param n the node which send the event
 	 */
-	public void connected();
+	public void connectionOpen(Node n);
 
 	/**
-	 * The connection to the server was lost.
+	 * The connection to the remote was closed.
 	 * <p>
-	 * This is invoked if the connection to the server breaks/ends anyhow.
+	 * The node will call this if the connection to the remote node was any how
+	 * closed.
+	 * 
+	 * @param n
 	 */
-	public void connectionLost();
+	public void connectionClosed(Node n);
 
 	/**
 	 * New message received.
 	 * <p>
-	 * This is invoked if the server sends a message to this client.
-	 * <p>
-	 * This will be invoke on any message, whether a listener for the message
-	 * was registered or not. Additional this method is called first, therefore
-	 * it can be pre-filtered.
+	 * This will be invoked on any received message, whether a listener for the
+	 * message was registered or not. Additional this method is called first,
+	 * therefore it can be pre-filtered.
 	 * <p>
 	 * If this method returns <code>false</code> the message will be rejected
 	 * and NOT be forward to the listeners. If it returns <code>true</code> the
-	 * message will be sent to the listeners.
+	 * message will be sent to the listeners as well.
 	 * <p>
 	 * The default should be <code>true</code>, if used with the listeners.
 	 * 
@@ -72,5 +74,6 @@ public interface ClientListener {
 	 * @param con the node from which the message was received
 	 * @return <code>true</code> if the given message was accepted
 	 */
-	public boolean newMessage(Message msg, NodeConnection con);
+	public boolean newMessage(Message msg, Node node);
+
 }
