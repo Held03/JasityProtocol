@@ -170,9 +170,14 @@ public class SendingMessage extends MessageContainer implements Future<Boolean> 
 		return null;
 	}
 
+	/**
+	 * Called by the node if block response was received.
+	 * 
+	 * @param offset the block response offset
+	 * @param length the block response length
+	 */
 	public synchronized void readBlockResponse(final int offset, final int length) {
-		MessageBlockDef mbd = new MessageBlockDef(offset, length);
-		// removes old instance (they are equals)
+		// removes old instance (all which are contained)
 		HashSet<MessageBlockDef> rm = new HashSet<MessageBlockDef>();
 		for (MessageBlockDef mbds : sentBlocks) {
 			if (mbds.offset >= offset && mbds.offset + mbds.length <= offset + length) {
@@ -198,7 +203,7 @@ public class SendingMessage extends MessageContainer implements Future<Boolean> 
 	 */
 	public synchronized byte[] resent(final int offset, final int length) {
 		MessageBlockDef mbd = new MessageBlockDef(offset, length);
-		// removes old instance (they are equals)
+		// removes old instance (all which are contained)
 		HashSet<MessageBlockDef> rm = new HashSet<MessageBlockDef>();
 		for (MessageBlockDef mbds : sentBlocks) {
 			if (mbds.offset >= offset && mbds.offset + mbds.length <= offset + length) {

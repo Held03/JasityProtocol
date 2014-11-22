@@ -38,6 +38,7 @@ import com.github.held03.jasityProtocol.interfaces.Address;
 import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
+import com.github.held03.jasityProtocol.interfaces.Message.Priority;
 import com.github.held03.jasityProtocol.interfaces.Node;
 
 
@@ -264,6 +265,19 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public Future<Boolean> sendMessage(final Message msg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.github.held03.jasityProtocol.interfaces.Node#sendMessage(com.github
+	 * .held03.jasityProtocol.interfaces.Message,
+	 * com.github.held03.jasityProtocol.interfaces.Message.Priority)
+	 */
+	@Override
+	public Future<Boolean> sendMessage(final Message msg, final Priority priority) {
 		// TODO Auto-generated method stub
 		return null;
 	}
