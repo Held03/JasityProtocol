@@ -126,7 +126,7 @@ public interface Node {
 	public float getPingTime();
 
 	/**
-	 * Send a message to the node.
+	 * Send a message to the remote node.
 	 * <p>
 	 * This should be called by the application to send a message.
 	 * <p>
@@ -146,6 +146,18 @@ public interface Node {
 	 * @return a future to track the message
 	 */
 	public Future<Boolean> sendMessage(Message msg);
+
+	/**
+	 * Send a message to the remote node.
+	 * <p>
+	 * This acts similar as {@link #sendMessage(Message)}, excepts it uses the
+	 * explicit priority for the message.
+	 * 
+	 * @param msg the message to send
+	 * @param priority the priority for the message
+	 * @return a tracking object
+	 */
+	public Future<Boolean> sendMessage(Message msg, Message.Priority priority);
 
 	/**
 	 * Closes the connection to the remote node and interrupts the connection.

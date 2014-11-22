@@ -36,14 +36,16 @@ package com.github.held03.jasityProtocol.base;
  */
 public class MessageContainer {
 
-	byte[] binaryData;
-	long messageID;
+	final byte[] binaryData;
+	final long messageID;
 
 	/**
 	 * 
 	 */
-	public MessageContainer() {
-		// TODO Auto-generated constructor stub
+	public MessageContainer(final long messageID, final byte[] binaryData) {
+		this.messageID = messageID;
+		this.binaryData = binaryData;
+
 	}
 
 }
