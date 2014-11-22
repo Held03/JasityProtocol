@@ -42,6 +42,11 @@ import com.github.held03.jasityProtocol.interfaces.Node;
 
 
 /**
+ * Implements a default node.
+ * <p>
+ * This should be able to use as a general node, so that a back end do not need
+ * to implement it.
+ * 
  * @author held03
  */
 public class DefaultNode implements Node {
@@ -59,10 +64,153 @@ public class DefaultNode implements Node {
 	 */
 	protected HashSet<ListenerContainer> messageListeners = new HashSet<>();
 
-	protected final Address address;
+	private long messageIdCouter = 0;
 
+	public synchronized long getNextId() {
+		return messageIdCouter++;
+	}
+
+	/**
+	 * A block containing other blocks.
+	 * 
+	 * <pre>
+	 * Structure:
+	 * 
+	 * - int: count of sub blocks
+	 *  { for every block
+	 *   - block data
+	 *  }
+	 * </pre>
+	 */
+	public static final byte BLOCK_MULTIBLOCK = -1;
+
+	/**
+	 * Ignoring block.
+	 * 
+	 * <pre>
+	 * Structure:
+	 * 
+	 * - int: size
+	 * - byte[]: data(ignore-able)
+	 * </pre>
+	 */
+	public static final byte BLOCK_IGNORE = 0;
+
+	/**
+	 * Handshake block.
+	 * <p>
+	 * Block about establishing and breaking connections. This is comparable
+	 * with the handshake in TCP.
+	 * 
+	 * <pre>
+	 * Structure:
+	 * 
+	 * - byte: type:
+	 *          0: Knock - request connection
+	 *          1: Hello - connection accepted
+	 *          2: Busy  - connection refused
+	 *          3: Bye   - connection closed
+	 * </pre>
+	 */
+	public static final byte BLOCK_HELLO = 1;
+
+	/**
+	 * Ping-Pong block.
+	 * <p>
+	 * Block about sending ping pong signals to check a connection.
+	 * <p>
+	 * Every ping has an ID. A pong answer with the ID of the originally ping.
+	 * So every pong can be assigned to a send ping. So it is possible to send
+	 * multiple pings.
+	 * 
+	 * <pre>
+	 * Structure:
+	 * 
+	 * - byte: type:
+	 *          0: Ping - request
+	 *          1: Pong - response
+	 * - long: ping ID
+	 * </pre>
+	 */
+	public static final byte BLOCK_PING = 2;
+
+	/**
+	 * Message meta data block.
+	 * <p>
+	 * A block for general messages control.
+	 * 
+	 * <pre>
+	 * Structure:
+	 * 
+	 * - byte: type:
+	 *          0: New      - start new message
+	 *          1: Unknown  - received block about a unknown message
+	 *          2: Send     - completely send a message
+	 *          3: Complete - successfully received message
+	 *          4: Error    - message fail [TODO]
+	 * - long: message ID
+	 * - long: CRC checksum or zero (only parsed on NEW)
+	 * </pre>
+	 */
+	public static final byte BLOCK_MESSAGE = 3;
+
+	/**
+	 * Data block of message.
+	 * <p>
+	 * Block containing data about a specific message.
+	 * 
+	 * <pre>
+	 * Structure:
+	 * 
+	 * - long: message ID
+	 * - int: data offset
+	 * - int: data length
+	 * - byte[]: message data
+	 * </pre>
+	 */
+	public static final byte BLOCK_MESSAGE_BLOCK = 4;
+
+	/**
+	 * Feedback block for a message.
+	 * <p>
+	 * This sends the receiver of an block back to the sender to indicate if a
+	 * block was received or not, if no answer was send after a specific time
+	 * the block will be send again.
+	 * 
+	 * <pre>
+	 * Structure:
+	 * 
+	 * -byte: answer:
+	 *         0: Acknowledge - get successfully block
+	 *         1: Repeat      - resent block
+	 * </pre>
+	 */
+	public static final byte BLOCK_MESSAGE_BLOCK_FEEDBACK = 5;
+
+	/**
+	 * The address of the remote node.
+	 */
+	protected final Address remoteAddress;
+
+	/**
+	 * The address of the local node.
+	 */
+	protected final Address localAddress;
+
+	/**
+	 * The connection to the Internet.
+	 * <p>
+	 * This is the access point, which the node uses to communicate with its
+	 * remote node.
+	 */
 	protected final Connection connection;
 
+	/**
+	 * Connected flag.
+	 * <p>
+	 * It is <code>true</code> if the the connection to the remote node was
+	 * successfully established.
+	 */
 	protected boolean isOnline;
 
 	/**
@@ -70,8 +218,9 @@ public class DefaultNode implements Node {
 	 * 
 	 * @param address the address the node is connected to
 	 */
-	public DefaultNode(final Address address, final Connection connection) {
-		this.address = address;
+	public DefaultNode(final Address local, final Address remote, final Connection connection) {
+		this.localAddress = local;
+		this.remoteAddress = remote;
 		this.connection = connection;
 	}
 
@@ -139,11 +288,20 @@ public class DefaultNode implements Node {
 
 	/*
 	 * (non-Javadoc)
-	 * @see com.github.held03.jasityProtocol.interfaces.Node#getAddress()
+	 * @see com.github.held03.jasityProtocol.interfaces.Node#getLocalAddress()
 	 */
 	@Override
-	public Address getAddress() {
-		return address;
+	public Address getLocalAddress() {
+		return localAddress;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.github.held03.jasityProtocol.interfaces.Node#getRemoteAddress()
+	 */
+	@Override
+	public Address getRemoteAddress() {
+		return remoteAddress;
 	}
 
 	/*
@@ -294,6 +452,26 @@ public class DefaultNode implements Node {
 				break;
 		}
 
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.github.held03.jasityProtocol.interfaces.Node#getPingTime()
+	 */
+	@Override
+	public float getPingTime() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.github.held03.jasityProtocol.interfaces.Node#getState()
+	 */
+	@Override
+	public State getState() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

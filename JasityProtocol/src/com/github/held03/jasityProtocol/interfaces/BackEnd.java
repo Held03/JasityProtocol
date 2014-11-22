@@ -29,6 +29,8 @@ package com.github.held03.jasityProtocol.interfaces;
 
 /**
  * This represents a back end protocol.
+ * <p>
+ * An implementation can implement there what it needs.
  * 
  * @author held03
  */

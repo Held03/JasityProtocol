@@ -44,6 +44,23 @@ import com.github.held03.jasityProtocol.base.ListenerContainer;
  */
 public interface Node {
 
+	public enum State {
+		/**
+		 * The back end tries to open the connection to the remote node.
+		 */
+		opening,
+
+		/**
+		 * The node is connected and ready to send an receive messages.
+		 */
+		connected,
+
+		/**
+		 * The node was anyhow closed.
+		 */
+		closed
+	}
+
 	/**
 	 * The connection back end received a block for this node.
 	 * <p>
@@ -94,6 +111,21 @@ public interface Node {
 	public byte[] getNextBlockDirectly();
 
 	/**
+	 * Gets the calculated ping time in seconds.
+	 * <p>
+	 * This didn't send any ping. It returns the average ping time.
+	 * <p>
+	 * The period of time within the ping time is collected can vary, but should
+	 * be below 5 minutes.
+	 * <p>
+	 * If no ping time was available, it is recommended to return
+	 * <code>10s</code>, but this depends on the implementation.
+	 * 
+	 * @return the average ping time
+	 */
+	public float getPingTime();
+
+	/**
 	 * Send a message to the node.
 	 * <p>
 	 * This should be called by the application to send a message.
@@ -131,12 +163,20 @@ public interface Node {
 	public boolean isConnected();
 
 	/**
-	 * Gets the address this node is connected to.
+	 * Gets the address of this node locally.
 	 * <p>
 	 * 
 	 * @return the address of this node
 	 */
-	public Address getAddress();
+	public Address getLocalAddress();
+
+	/**
+	 * Gets the address this node is connected to.
+	 * <p>
+	 * 
+	 * @return the address of the remote node
+	 */
+	public Address getRemoteAddress();
 
 	/**
 	 * Adds a listener object for this connection.
@@ -183,4 +223,6 @@ public interface Node {
 	 * @return all listeners of this connection
 	 */
 	public Set<ListenerContainer> getListeners();
+
+	public State getState();
 }

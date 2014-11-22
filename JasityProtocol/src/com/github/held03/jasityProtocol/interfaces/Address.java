@@ -28,11 +28,17 @@ package com.github.held03.jasityProtocol.interfaces;
 
 
 /**
- * Am address to a node specific for a protocol.
+ * An address to a node specific for a protocol.
  * <p>
- * This interface represents a protocol specific address.
+ * An address relates always to a specific back end. That means every back end
+ * has its own address implementation.
  * <p>
- * Use {@link #equals(Object)} to check if to addresses point to the same node.
+ * An address must unambiguously identify a node. If any tow addresses point
+ * anyhow to the same node the {@link #equals(Object)} method must return
+ * <code>true</code>.
+ * <p>
+ * The back end has to provide a proper constructor for its address
+ * implementation.
  * <p>
  * This interface has to be implemented by the back end.
  * 
@@ -43,8 +49,8 @@ public interface Address {
 	/**
 	 * Initiate a connection to the node.
 	 * <p>
-	 * This method will block until the connection was established. If something
-	 * went wrong it throws an exception.
+	 * This method will return immediately with a new node instance, even if it
+	 * exist is already a connection to this address.
 	 * 
 	 * @return a new node connected to this address
 	 */
@@ -54,7 +60,7 @@ public interface Address {
 	 * Gets the back end for which this address is specified.
 	 * <p>
 	 * 
-	 * @return the protocol this address uses
+	 * @return the protocol, which uses this address
 	 */
 	public BackEnd getBackEnd();
 }

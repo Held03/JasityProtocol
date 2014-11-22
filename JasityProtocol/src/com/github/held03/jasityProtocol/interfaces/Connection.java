@@ -43,32 +43,19 @@ import java.util.List;
 public interface Connection {
 
 	/**
-	 * Closes the connection to the target.
+	 * Closes the connection from the Internet.
+	 * <p>
+	 * This will close all related nodes as well.
 	 */
 	public void close();
 
 	/**
-	 * Check is the connection connected.
+	 * Check if the connection is connected.
 	 * 
 	 * @return <code>true</code> if the connection is online, or
 	 *         <code>false</code> if it is disconnected
 	 */
 	public boolean isConnected();
-
-	/**
-	 * Gets the calculated ping time in seconds.
-	 * <p>
-	 * This didn't send any ping. It returns the average ping time.
-	 * <p>
-	 * The period of time within the ping time is collected can vary, but should
-	 * be below 5 minutes.
-	 * <p>
-	 * If no ping time was available, it is recommended to return
-	 * <code>10s</code>, but this depends on the implementation.
-	 * 
-	 * @return the average ping time
-	 */
-	public float getPingTime();
 
 	/**
 	 * Gets the relative time the sender takes to send the data.
@@ -99,8 +86,25 @@ public interface Connection {
 	/**
 	 * Returns all related {@link Node}s.
 	 * <p>
+	 * All nodes of this list communicate over this connection.
 	 * 
 	 * @return list of nodes which communicates over this node
 	 */
 	public List<Node> getRelatedNodes();
+
+	/**
+	 * Returns the maximum size of a sending block.
+	 * <p>
+	 * On a block based or package based back end this is to be set to the usage
+	 * size.
+	 * <p>
+	 * The {@link Node} will use this size to adjust the size of the requested
+	 * blocks.
+	 * <p>
+	 * If the back end does not depend on blocks or packages it should use a
+	 * default size perhaps depending on the through put.
+	 * 
+	 * @return the size of blocks
+	 */
+	public int getBlockSize();
 }

@@ -26,27 +26,24 @@
 
 package com.github.held03.jasityProtocol.base;
 
-import com.github.held03.jasityProtocol.interfaces.Connection;
-
 
 /**
- * A general connection implementation.
+ * Contains the binary data of a message.
  * <p>
- * This class implements some general methods.
- * <p>
+ * This class contains the binary data of a message used to send or receive it.
  * 
- * @author held03
+ * @author adam
  */
-public abstract class AbstractConnection implements Connection {
+public class MessageContainer {
 
+	byte[] binaryData;
+	long messageID;
 
 	/**
-	 * Normal constructor.
+	 * 
 	 */
-	public AbstractConnection() {
-
+	public MessageContainer() {
+		// TODO Auto-generated constructor stub
 	}
-
-
 
 }

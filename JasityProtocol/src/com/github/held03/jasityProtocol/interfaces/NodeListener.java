@@ -74,6 +74,6 @@ public interface NodeListener {
 	 * @param con the node from which the message was received
 	 * @return <code>true</code> if the given message was accepted
 	 */
-	public boolean newMessage(Message msg, Node node);
+	public boolean acceptMessage(Message msg, Node node);
 
 }
