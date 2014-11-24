@@ -65,11 +65,44 @@ public class DefaultNode implements Node {
 	 */
 	protected HashSet<ListenerContainer> messageListeners = new HashSet<>();
 
+	/**
+	 * Message id counter.
+	 * <p>
+	 * <b>IMPORTANT:</b> NEVER ACCESS THIS FIELD. Instant uses
+	 * {@link #getNextId()} to get an ID.
+	 */
 	private long messageIdCouter = 0;
 
+	/**
+	 * Get a new unique message id for this node.
+	 * <p>
+	 * This id is only for messages send by this node.
+	 * 
+	 * @return new unique id
+	 */
 	public synchronized long getNextId() {
 		return messageIdCouter++;
 	}
+
+	/**
+	 * The oldest version the current one can handle due compatibility.
+	 * <p>
+	 * The version codes depends only on this implementation. Other nodes may
+	 * have different version codes.
+	 * <p>
+	 * This value is always smaller or equals to {@link #CURRENT_VERSION}. All
+	 * version between <code>MIN_VERSION</code> and <code>CURRENT_VERSION</code>
+	 * has to be handled by this implementation.
+	 */
+	public static final long MIN_VERSION = 0;
+
+	/**
+	 * The version of the used implementation.
+	 * <p>
+	 * The version codes depends only on this implementation. Other nodes may
+	 * have different version codes.
+	 */
+	public static final long CURRENT_VERSION = 0;
 
 	/**
 	 * A block containing other blocks.
@@ -101,7 +134,8 @@ public class DefaultNode implements Node {
 	 * Handshake block.
 	 * <p>
 	 * Block about establishing and breaking connections. This is comparable
-	 * with the handshake in TCP.
+	 * with the handshake in TCP. The sender send always its version code to let
+	 * the receiver handle compatibility.
 	 * 
 	 * <pre>
 	 * Structure:
@@ -111,6 +145,7 @@ public class DefaultNode implements Node {
 	 *          1: Hello - connection accepted
 	 *          2: Busy  - connection refused
 	 *          3: Bye   - connection closed
+	 * - long: version code
 	 * </pre>
 	 */
 	public static final byte BLOCK_HELLO = 1;
@@ -181,7 +216,8 @@ public class DefaultNode implements Node {
 	 * <pre>
 	 * Structure:
 	 * 
-	 * -byte: answer:
+	 * - long: message ID to answer to
+	 * - byte: answer:
 	 *         0: Acknowledge - get successfully block
 	 *         1: Repeat      - resent block
 	 * </pre>
@@ -213,6 +249,10 @@ public class DefaultNode implements Node {
 	 * successfully established.
 	 */
 	protected boolean isOnline;
+
+
+
+	protected long remoteVersionCode = -1;
 
 	/**
 	 * Create a new Node.

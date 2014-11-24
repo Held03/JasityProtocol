@@ -41,23 +41,92 @@ import java.util.concurrent.TimeoutException;
  */
 public class SendingMessage extends MessageContainer implements Future<Boolean> {
 
+	/**
+	 * Canceled flag.
+	 * <p>
+	 * If set, it indicates that the user requested the abort of the
+	 * transmitting of the message.
+	 */
 	public boolean isCanceled = false;
+
+	/**
+	 * The current position of sent data.
+	 * <p>
+	 * It points as an array point into the data array and point to the first
+	 * byte which hasn't yet been send.
+	 * <p>
+	 * <b>Notice:</b> It points out of the array if all bytes where sent.
+	 */
 	protected int currentOffset = 0;
 
+	/**
+	 * Points out if the whole data was transmitted and are confirmed by the
+	 * remote.
+	 * <p>
+	 * This field shows if the data was transmitted, successfully, not
+	 * successfully or still in progress. If the transmitting succeeded, it is
+	 * <code>true</code>. If an error occurs or the transmitting was aborted, it
+	 * is <code>false</code>. If the data wasn't yet completely sent or waiting
+	 * for confirmation, it is <code>null</code>.
+	 * <p>
+	 * <b>Notice:</b> This field can be <code>null</code>.
+	 */
 	public Boolean finished = null;
 
-	protected HashSet<MessageBlockDef> sentBlocks;
+	/**
+	 * List of sent, but not confirmed blocks.
+	 * <p>
+	 * Every time a block was sent it will be listed in that list, until it gets
+	 * confirmed by the remote.
+	 */
+	protected HashSet<MessageBlockDef> sentBlocks = new HashSet<SendingMessage.MessageBlockDef>();
 
+	/**
+	 * A abstract description of a block of data.
+	 * <p>
+	 * This class describes a block independently from the actual data, only by
+	 * offset and length. Additional, the time of sent is saved too. This allows
+	 * searching for old unconfirmed blocks for automatic resenting.
+	 * 
+	 * @author adam
+	 */
 	class MessageBlockDef {
 
+		/**
+		 * The start position of the block in the data array.
+		 */
 		public final int offset;
+		/**
+		 * The length of the block in bytes.
+		 */
 		public final int length;
+		/**
+		 * The time as the block was sent in milliseconds.
+		 * <p>
+		 * The time stamp is equally to those returned by
+		 * {@link System#currentTimeMillis()}.
+		 */
 		public final long timeSent;
 
+		/**
+		 * Create a specific block.
+		 * <p>
+		 * The time will be set to the current time.
+		 * 
+		 * @param offset the start point of the block
+		 * @param length the length of the block
+		 */
 		public MessageBlockDef(final int offset, final int length) {
 			this(offset, length, System.currentTimeMillis());
 		}
 
+		/**
+		 * Create a fully specified block.
+		 * 
+		 * @param offset the start point of the block
+		 * @param length the length of the block
+		 * @param timeSent the sending time of the block.
+		 */
 		public MessageBlockDef(final int offset, final int length, final long timeSent) {
 			this.offset = offset;
 			this.length = length;
@@ -77,7 +146,9 @@ public class SendingMessage extends MessageContainer implements Future<Boolean> 
 	}
 
 	/**
-	 * 
+	 * Create a message with given binary data.
+	 * <p>
+	 * To generate such data use a message coder. TODO: specify message coder
 	 */
 	public SendingMessage(final long messageID, final byte[] binaryData) {
 		super(messageID, binaryData);
@@ -195,7 +266,6 @@ public class SendingMessage extends MessageContainer implements Future<Boolean> 
 
 	/**
 	 * Returns a block of data to resent it.
-	 * <p>
 	 * 
 	 * @param offset the start position of the data
 	 * @param length the length of the data
@@ -291,7 +361,7 @@ public class SendingMessage extends MessageContainer implements Future<Boolean> 
 	 */
 	@Override
 	public boolean isDone() {
-		return isCanceled || (currentOffset == binaryData.length && sentBlocks.isEmpty());
+		return finished != null;
 	}
 
 }
