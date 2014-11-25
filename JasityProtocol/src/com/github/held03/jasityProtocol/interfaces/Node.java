@@ -44,21 +44,30 @@ import com.github.held03.jasityProtocol.base.ListenerContainer;
  */
 public interface Node {
 
+	/**
+	 * Represents a state of a node of its live time.
+	 * <p>
+	 * Every time every node has exactly one of these states. Usually starting
+	 * with {@link #OPENING}, continue with {@link #CONNECTED} and finally
+	 * ending with {@link #CLOSED}.
+	 * 
+	 * @author held03
+	 */
 	public enum State {
 		/**
 		 * The back end tries to open the connection to the remote node.
 		 */
-		opening,
+		OPENING,
 
 		/**
 		 * The node is connected and ready to send an receive messages.
 		 */
-		connected,
+		CONNECTED,
 
 		/**
 		 * The node was anyhow closed.
 		 */
-		closed
+		CLOSED
 	}
 
 	/**
@@ -236,5 +245,12 @@ public interface Node {
 	 */
 	public Set<ListenerContainer> getListeners();
 
+	/**
+	 * Gets the current state of the node.
+	 * <p>
+	 * For more informations see {@link State}.
+	 * 
+	 * @return the state of the node
+	 */
 	public State getState();
 }

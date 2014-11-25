@@ -84,7 +84,6 @@ public interface Message {
 		 * This message may be used by filters to do some status update or
 		 * similar.
 		 */
-
 		FILTER,
 
 		/**
