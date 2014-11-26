@@ -26,6 +26,9 @@
 
 package com.github.held03.jasityProtocol.base;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +43,7 @@ import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
 import com.github.held03.jasityProtocol.interfaces.Message.Priority;
 import com.github.held03.jasityProtocol.interfaces.Node;
+import com.github.held03.jasityProtocol.util.PingManager;
 
 
 /**
@@ -60,6 +64,7 @@ public class DefaultNode implements Node {
 	 * 
 	 * - int: count of sub blocks
 	 *  { for every block
+	 *   - int: block size
 	 *   - block data
 	 *  }
 	 * </pre>
@@ -307,6 +312,16 @@ public class DefaultNode implements Node {
 	protected long remoteVersionCode = -1;
 
 	/**
+	 * The ping manager to manage pings.
+	 */
+	protected PingManager pingManager = new PingManager();
+
+	/**
+	 * The current state of the Node.
+	 */
+	protected State currentState = State.OPENING;
+
+	/**
 	 * Create a new Node.
 	 * 
 	 * @param address the address the node is connected to
@@ -324,7 +339,47 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public void receivedBlock(final byte[] block) {
-		// TODO Auto-generated method stub
+		try (ByteArrayInputStream in = new ByteArrayInputStream(block); DataInputStream dis = new DataInputStream(in)) {
+
+			switch (dis.readByte()) {
+			case BLOCK_MULTIBLOCK:
+				int count = dis.readInt();
+				int len;
+				byte[] buf;
+				for (int i = 0; i < count; i++) {
+					len = dis.readInt();
+					buf = new byte[len];
+					dis.read(buf);
+					// call recursively
+					receivedBlock(buf);
+				}
+				break;
+
+			case BLOCK_HELLO:
+				//TODO
+				break;
+
+			case BLOCK_PING:
+				int type = dis.readByte();
+				long id = dis.readLong();
+
+				switch (type) {
+				case 0: // Ping
+					// TODO send pong with id.
+					break;
+
+				case 1: // Pong
+					pingManager.addPong(id);
+					break;
+				}
+
+				break;
+
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -566,8 +621,7 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public float getPingTime() {
-		// TODO Auto-generated method stub
-		return 0;
+		return pingManager.getAverageTime();
 	}
 
 	/*
@@ -576,8 +630,7 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public State getState() {
-		// TODO Auto-generated method stub
-		return null;
+		return currentState;
 	}
 
 }
