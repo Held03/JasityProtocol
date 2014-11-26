@@ -35,11 +35,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.github.held03.jasityProtocol.interfaces.Message;
+
 
 /**
  * @author adam
  */
-public class SendingMessage extends MessageContainer implements Future<Boolean> {
+public class SendingMessage extends MessageContainer implements Future<Boolean>, Comparable<SendingMessage> {
 
 	/**
 	 * Canceled flag.
@@ -72,6 +74,20 @@ public class SendingMessage extends MessageContainer implements Future<Boolean> 
 	 * <b>Notice:</b> This field can be <code>null</code>.
 	 */
 	public Boolean finished = null;
+
+	/**
+	 * The priority of this message.
+	 * <p>
+	 * This is the major sorting field.
+	 */
+	public final Message.Priority priority;
+
+	/**
+	 * The time this message was originally created.
+	 * <p>
+	 * This is the minor sorting field.
+	 */
+	public final long creation = System.currentTimeMillis();
 
 	/**
 	 * List of sent, but not confirmed blocks.
@@ -151,7 +167,18 @@ public class SendingMessage extends MessageContainer implements Future<Boolean> 
 	 * To generate such data use a message coder. TODO: specify message coder
 	 */
 	public SendingMessage(final long messageID, final byte[] binaryData) {
+		this(messageID, binaryData, Message.Priority.NORMAL);
+	}
+
+	/**
+	 * Create a message with given binary data.
+	 * <p>
+	 * To generate such data use a message coder. TODO: specify message coder
+	 */
+	public SendingMessage(final long messageID, final byte[] binaryData, final Message.Priority priority) {
 		super(messageID, binaryData);
+
+		this.priority = priority;
 	}
 
 	/**
@@ -362,6 +389,21 @@ public class SendingMessage extends MessageContainer implements Future<Boolean> 
 	@Override
 	public boolean isDone() {
 		return finished != null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	@Override
+	public int compareTo(final SendingMessage o) {
+		int prioSort = priority.compareTo(o.priority);
+
+		if (prioSort == 0) {
+			return (Long.compare(creation, o.creation));
+		} else {
+			return prioSort;
+		}
 	}
 
 }
