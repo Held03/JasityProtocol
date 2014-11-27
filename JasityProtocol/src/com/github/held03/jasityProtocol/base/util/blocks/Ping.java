@@ -34,6 +34,27 @@ import java.io.IOException;
 
 
 /**
+ * Ping-Pong block.
+ * <p>
+ * Block about sending ping pong signals to check a connection.
+ * <p>
+ * Every ping has an ID. A pong answer with the ID of the originally ping. So
+ * every pong can be assigned to a send ping. So it is possible to send multiple
+ * pings.
+ * 
+ * <pre>
+ * Structure:
+ * 
+ * - byte: type:
+ *          0: Ping - request
+ *          1: Pong - response
+ * - long: ping ID
+ * </pre>
+ * 
+ * The sender sends <code>Ping</code> with an ID. The receiver answers with
+ * <code>Pong</code> and the same ID. Both nodes can send Pings independently.
+ * 
+ * @see NodeBlock#BLOCK_PING
  * @author held03
  */
 public class Ping extends NodeBlock {
@@ -74,10 +95,10 @@ public class Ping extends NodeBlock {
 	}
 
 	/**
-	 * Create a type and id.
+	 * Create a ping with type and id.
 	 * 
-	 * @param type the
-	 * @param id
+	 * @param type the of the ping
+	 * @param id the id of the ping
 	 */
 	public Ping(final byte type, final long id) {
 		this.type = type;
@@ -92,36 +113,60 @@ public class Ping extends NodeBlock {
 	@Override
 	public byte[] encode() {
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); DataOutputStream dout = new DataOutputStream(out)) {
+			/*
+			 * Write the native type.
+			 */
 			dout.writeByte(getNativeType());
+
+			/*
+			 * Write the actual data.
+			 */
 			dout.writeByte(type);
 			dout.writeLong(id);
 
+			/*
+			 * Flush and return data.
+			 */
 			dout.flush();
 
 			return out.toByteArray();
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return new byte[0];
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.github.held03.jasityProtocol.base.util.blocks.NodeBlock#decode(byte
+	 * [], int, int)
+	 */
 	@Override
 	public Ping decode(final byte[] data, final int offset, final int length) {
 		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
 				DataInputStream dis = new DataInputStream(in)) {
+			/*
+			 * Get the data.
+			 */
 			type = dis.readByte();
 			id = dis.readLong();
 
 			return this;
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		return this;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.github.held03.jasityProtocol.base.util.blocks.NodeBlock#getSize()
+	 */
 	@Override
 	public int getSize() {
 		/*

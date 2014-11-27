@@ -34,11 +34,28 @@ import java.io.IOException;
 
 
 /**
+ * Data block of message.
+ * <p>
+ * Block containing data about a specific message.
+ * 
+ * <pre>
+ * Structure:
+ * 
+ * - long: message ID
+ * - int: data offset
+ * - int: data length
+ * - byte[]: message data
+ * </pre>
+ * 
+ * The sender sends this to transmit data of a message. These blocks are
+ * controlled by {@link #BLOCK_MESSAGE} and
+ * {@link #BLOCK_MESSAGE_BLOCK_FEEDBACK}. The receiver of this block has to
+ * answer with a {@link #BLOCK_MESSAGE_BLOCK_FEEDBACK}.
+ * 
+ * @see NodeBlock#BLOCK_MESSAGE_BLOCK
  * @author held03
  */
 public class MessageBlock extends NodeBlock {
-
-
 
 	/**
 	 * The id of the message, this block relates to.
@@ -88,12 +105,22 @@ public class MessageBlock extends NodeBlock {
 	@Override
 	public byte[] encode() {
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); DataOutputStream dout = new DataOutputStream(out)) {
+			/*
+			 * Write the native type.
+			 */
 			dout.writeByte(getNativeType());
+
+			/*
+			 * Write the actual data.
+			 */
 			dout.writeLong(id);
 			dout.writeInt(offset);
 			dout.writeInt(data.length);
 			dout.write(data);
 
+			/*
+			 * Flush and return data.
+			 */
 			dout.flush();
 
 			return out.toByteArray();
@@ -115,6 +142,9 @@ public class MessageBlock extends NodeBlock {
 	public MessageBlock decode(final byte[] data, final int offset, final int length) {
 		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
 				DataInputStream dis = new DataInputStream(in)) {
+			/*
+			 * Get the data.
+			 */
 			id = dis.readLong();
 			this.offset = dis.readInt();
 			int len = dis.readInt();

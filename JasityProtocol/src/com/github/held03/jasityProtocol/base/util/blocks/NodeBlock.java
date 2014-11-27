@@ -30,11 +30,13 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 
+import com.github.held03.jasityProtocol.interfaces.Node;
+
 
 /**
- * Represents a node block.
+ * Represents a {@link Node} block.
  * <p>
- * These are basic blocks to control the base system.
+ * These are basic blocks to control the base system of a node.
  * 
  * @author held03
  */
@@ -54,6 +56,8 @@ public abstract class NodeBlock {
 	 * </pre>
 	 * 
 	 * Can be used to compose multiple block into on sent block.
+	 * 
+	 * @see Multi
 	 */
 	public static final byte BLOCK_MULTIBLOCK = -1;
 
@@ -331,15 +335,22 @@ public abstract class NodeBlock {
 				return new Multi().decode(data, 1, length - 1);
 
 			case BLOCK_HELLO:
-				//TODO
-				break;
+				return new Hello().decode(data, 1, length - 1);
 
 			case BLOCK_PING:
 				return new Ping().decode(data, 1, length - 1);
 
 			case BLOCK_MESSAGE:
-				//TODO
-				break;
+				return new Message().decode(data, 1, length - 1);
+
+			case BLOCK_MESSAGE_BLOCK:
+				return new MessageBlock().decode(data, 1, length - 1);
+
+			case BLOCK_MESSAGE_BLOCK_FEEDBACK:
+				return new MessageBlockFeedback().decode(data, 1, length - 1);
+
+			case BLOCK_IGNORE:
+				return new Ignore().decode(data, 1, length - 1);
 
 			}
 

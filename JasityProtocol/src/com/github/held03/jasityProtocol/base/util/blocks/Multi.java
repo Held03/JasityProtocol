@@ -34,6 +34,21 @@ import java.io.IOException;
 
 
 /**
+ * A block containing other blocks.
+ * 
+ * <pre>
+ * Structure:
+ * 
+ * - int: count of sub blocks
+ *  { for every block
+ *   - int: block size
+ *   - block data
+ *  }
+ * </pre>
+ * 
+ * Can be used to compose multiple block into on sent block.
+ * 
+ * @see NodeBlock#BLOCK_MULTIBLOCK
  * @author held03
  */
 public class Multi extends NodeBlock {

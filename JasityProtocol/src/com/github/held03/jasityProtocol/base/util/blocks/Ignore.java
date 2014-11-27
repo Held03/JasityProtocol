@@ -31,97 +31,61 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Random;
 
 
 /**
- * Handshake block.
- * <p>
- * Block about establishing and breaking connections. This is comparable with
- * the handshake in TCP. The sender send always its version code to let the
- * receiver handle compatibility.
+ * Ignoring block.
  * 
  * <pre>
  * Structure:
  * 
- * - byte: type:
- *          0: Knock - request connection
- *          1: Hello - connection accepted
- *          2: Busy  - connection refused
- *          3: Bye   - connection closed
- * - long: version code
+ * - int: size
+ * - byte[]: data(ignore-able)
  * </pre>
  * 
- * Opening socket have first to send the <code>Knock</code> order. It's allowed
- * that both send it. The receiver of such an order has to answer with either
- * <code>Hello</code> to accept or <code>Busy</code> to deny.
- * <p>
- * If any one wants to break the connection it sends <code>Bye</code>. Usually,
- * the receiver answer with <code>Bye</code> but that is not necessary. Due this
- * lazy process it is possible that one node sends the <code>Bye</code> command
- * but the other node never receives it. Therefore it is useful to check
- * frequently the ping time by {@link #BLOCK_PING} and if the ping fails
- * multiple times the connection should be threat as dead.
+ * Ignoring data.
+ * Can have purpose for cipher stuff.
  * 
- * @see NodeBlock#BLOCK_HELLO
+ * @see NodeBlock#BLOCK_IGNORE
  * @author held03
  */
-public class Hello extends NodeBlock {
+public class Ignore extends NodeBlock {
 
 	/**
-	 * Illegal block type.
+	 * The id of the ping.
 	 */
-	public static final byte TYPE_ILLEGAL = -1;
+	byte[] data = new byte[0];
 
 	/**
-	 * Request connection.
+	 * Create a empty ignoring block.
 	 */
-	public static final byte TYPE_KNOCK = 0;
-
-	/**
-	 * Connection accepted.
-	 */
-	public static final byte TYPE_HELLO = 1;
-
-	/**
-	 * Connection refused.
-	 */
-	public static final byte TYPE_BUSY = 2;
-
-	/**
-	 * connection closed
-	 */
-	public static final byte TYPE_BYE = 3;
-
-	/**
-	 * The version of the node which sent this.
-	 */
-	long version = 0;
-
-	/**
-	 * The type of this block.
-	 * <p>
-	 * Distinguish this type from the native type which is always the same for
-	 * this kind of block.
-	 */
-	byte type = TYPE_ILLEGAL;
-
-	/**
-	 * Creates empty hello block.
-	 */
-	public Hello() {
+	public Ignore() {
 
 	}
 
 	/**
-	 * Creates a specific hello block.
+	 * Create a ignoring block with the given data.
+	 * <p>
+	 * It will contain pseudo-randomly filled bytes.
 	 * 
-	 * @param type the hello type.
-	 * @param version the node version of the sender
+	 * @param size the length of data which it should contain
 	 */
-	public Hello(final byte type, final long version) {
-		this.type = type;
-		this.version = version;
+	public Ignore(final int size) {
+		data = new byte[size];
 
+		Random ran = new Random();
+
+		ran.nextBytes(data);
+	}
+
+	/**
+	 * Create a specific ignoring block.
+	 * 
+	 * @param data the data it contains
+	 */
+	public Ignore(final byte[] data) {
+		this.data = data;
 	}
 
 	/*
@@ -139,8 +103,8 @@ public class Hello extends NodeBlock {
 			/*
 			 * Write the actual data.
 			 */
-			dout.writeByte(type);
-			dout.writeLong(version);
+			dout.writeInt(data.length);
+			dout.write(data);
 
 			/*
 			 * Flush and return data.
@@ -162,14 +126,17 @@ public class Hello extends NodeBlock {
 	 * [], int, int)
 	 */
 	@Override
-	public Hello decode(final byte[] data, final int offset, final int length) {
+	public Ignore decode(final byte[] data, final int offset, final int length) {
 		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
 				DataInputStream dis = new DataInputStream(in)) {
 			/*
 			 * Get the data.
 			 */
-			type = dis.readByte();
-			version = dis.readLong();
+			int len = dis.readInt();
+
+			this.data = new byte[len];
+
+			dis.read(this.data);
 
 			return this;
 
@@ -188,12 +155,12 @@ public class Hello extends NodeBlock {
 	@Override
 	public int getSize() {
 		/*
-		 * Takes always 10 bytes:
+		 * Takes always 4 + length of data bytes:
 		 * - 1 byte: native type (byte)
-		 * - 1 byte: type (byte)
-		 * - 8 bytes: version (long)
+		 * - 4 byte: length (int)
+		 * - length bytes: data (byte[])
 		 */
-		return 10;
+		return 5 + data.length;
 
 	}
 
@@ -205,7 +172,7 @@ public class Hello extends NodeBlock {
 	 */
 	@Override
 	public byte getNativeType() {
-		return BLOCK_HELLO;
+		return BLOCK_IGNORE;
 	}
 
 }

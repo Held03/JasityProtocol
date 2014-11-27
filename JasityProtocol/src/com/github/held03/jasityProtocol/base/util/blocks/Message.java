@@ -34,6 +34,47 @@ import java.io.IOException;
 
 
 /**
+ * Message meta data block.
+ * <p>
+ * A block for general messages control.
+ * 
+ * <pre>
+ * Structure:
+ * 
+ * - byte: type:
+ *          0: New      - start new message
+ *          1: Unknown  - received block about a unknown message
+ *          2: Sent     - completely sent a message
+ *          3: Complete - successfully received message
+ *          4: Error    - message fail [TODO]
+ *          5: WhatsUp  - too long no request
+ *          6: Pending  - message is waiting in the queue
+ * - long: message ID
+ * - long: CRC checksum or zero (only parsed on NEW)
+ * </pre>
+ * 
+ * The sender first sends the <code>New</code> command with the related ID and a
+ * CRC checksum. Afterwards the sender sends all the blocks by
+ * {@link #BLOCK_MESSAGE_BLOCK}. If the receiver receives a
+ * {@link #BLOCK_MESSAGE_BLOCK} without knowing the message ID, is sends an
+ * <code>Unknown</code> command and the sender answers with the <code>New</code>
+ * command again exactly like above. If the sender sent all block and received
+ * all {@link #BLOCK_MESSAGE_BLOCK_FEEDBACK}s about them, it sends the
+ * <code>Send</code> command and the receiver answers with the
+ * <code>Complete</code> command.
+ * <p>
+ * If any when an deep error occurs or the transmission was canceled any how,
+ * any one writes <code>Error</code>. The other node can answer even with
+ * <code>Error</code>, it like the <code>Bye</code> command of the
+ * {@link #BLOCK_HELLO} block. If the receivers thinks the sending of message
+ * hangs up, can send the <code>WhatsUp</code> command. The sender can answer
+ * differently, either if the transmission was broken it answers
+ * <code>Error</code>, if there is still some thing to send it answers
+ * <code>Pending</code> also if it is still sending blocks. If the transmission
+ * was successful it answers <code>Send</code> and the receiver has to answer
+ * like above.
+ * 
+ * @see NodeBlock#BLOCK_MESSAGE
  * @author held03
  */
 public class Message extends NodeBlock {
@@ -134,16 +175,26 @@ public class Message extends NodeBlock {
 	@Override
 	public byte[] encode() {
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); DataOutputStream dout = new DataOutputStream(out)) {
+			/*
+			 * Write the native type.
+			 */
 			dout.writeByte(getNativeType());
+
+			/*
+			 * Write the actual data.
+			 */
 			dout.writeByte(type);
 			dout.writeLong(id);
 			dout.writeLong(crc);
 
+			/*
+			 * Flush and return data.
+			 */
 			dout.flush();
 
 			return out.toByteArray();
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return new byte[0];
@@ -156,13 +207,16 @@ public class Message extends NodeBlock {
 	public Message decode(final byte[] data, final int offset, final int length) {
 		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
 				DataInputStream dis = new DataInputStream(in)) {
+			/*
+			 * Get the data.
+			 */
 			type = dis.readByte();
 			id = dis.readLong();
 			crc = dis.readLong();
 
 			return this;
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

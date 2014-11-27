@@ -34,10 +34,31 @@ import java.io.IOException;
 
 
 /**
+ * Feedback block for a message.
+ * <p>
+ * This sends the receiver of an block back to the sender to indicate if a block
+ * was received or not, if no answer was send after a specific time the block
+ * will be send again.
+ * 
+ * <pre>
+ * Structure:
+ * 
+ * - long: message ID to answer to
+ * - int: data offset
+ * - int: data length
+ * - byte: answer:
+ *         0: Acknowledge - get successfully block
+ *         1: Repeat      - resent block
+ * </pre>
+ * 
+ * The receiver of a {@link #BLOCK_MESSAGE_BLOCK} answers with this block either
+ * by sending the <code>Acknowledge</code> command on success or the
+ * <code>Repeat</code> if something failed.
+ * 
+ * @see NodeBlock#BLOCK_MESSAGE_BLOCK_FEEDBACK
  * @author held03
  */
 public class MessageBlockFeedback extends NodeBlock {
-
 
 	/**
 	 * Illegal block type.
@@ -111,17 +132,27 @@ public class MessageBlockFeedback extends NodeBlock {
 	@Override
 	public byte[] encode() {
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); DataOutputStream dout = new DataOutputStream(out)) {
+			/*
+			 * Write the native type.
+			 */
 			dout.writeByte(getNativeType());
+
+			/*
+			 * Write the actual data.
+			 */
 			dout.writeLong(id);
 			dout.writeInt(this.offset);
 			dout.writeInt(this.length);
 			dout.writeByte(type);
 
+			/*
+			 * Flush and return data.
+			 */
 			dout.flush();
 
 			return out.toByteArray();
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return new byte[0];
@@ -143,20 +174,28 @@ public class MessageBlockFeedback extends NodeBlock {
 	public MessageBlockFeedback decode(final byte[] data, final int offset, final int length) {
 		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
 				DataInputStream dis = new DataInputStream(in)) {
+			/*
+			 * Get the data.
+			 */
 			id = dis.readLong();
 			this.offset = dis.readInt();
 			this.length = dis.readInt();
 			type = dis.readByte();
 
 			return this;
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		return this;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.github.held03.jasityProtocol.base.util.blocks.NodeBlock#getSize()
+	 */
 	@Override
 	public int getSize() {
 		/*
