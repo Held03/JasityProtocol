@@ -53,7 +53,7 @@ import java.util.Random;
 public class Ignore extends NodeBlock {
 
 	/**
-	 * The id of the ping.
+	 * The data of the block.
 	 */
 	byte[] data = new byte[0];
 
@@ -86,6 +86,13 @@ public class Ignore extends NodeBlock {
 	 */
 	public Ignore(final byte[] data) {
 		this.data = data;
+	}
+
+	/**
+	 * The data of the block.
+	 */
+	public byte[] getData() {
+		return data;
 	}
 
 	/*

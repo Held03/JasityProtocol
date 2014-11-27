@@ -72,8 +72,6 @@ public class MessageBlock extends NodeBlock {
 	 */
 	byte[] data = new byte[0];
 
-	private byte[] data2;
-
 	/**
 	 * Create a empty ping.
 	 */
@@ -90,8 +88,29 @@ public class MessageBlock extends NodeBlock {
 	public MessageBlock(final long id, final int offset, final byte[] data) {
 		this.id = id;
 		this.offset = offset;
-		data2 = data;
+		this.data = data;
 
+	}
+
+	/**
+	 * The id of the message, this block relates to.
+	 */
+	public long getId() {
+		return id;
+	}
+
+	/**
+	 * The offset of the send data in the message.
+	 */
+	public int getOffset() {
+		return offset;
+	}
+
+	/**
+	 * The binary data of the message.
+	 */
+	public byte[] getData() {
+		return data;
 	}
 
 	/*

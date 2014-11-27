@@ -72,6 +72,13 @@ public class Multi extends NodeBlock {
 		subBlocks = blocks;
 	}
 
+	/**
+	 * The sub blocks contained by this block.
+	 */
+	public NodeBlock[] getSubBlocks() {
+		return subBlocks;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 */

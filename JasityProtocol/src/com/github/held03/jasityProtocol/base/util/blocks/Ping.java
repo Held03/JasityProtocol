@@ -106,6 +106,23 @@ public class Ping extends NodeBlock {
 
 	}
 
+	/**
+	 * The id of the ping.
+	 */
+	public long getId() {
+		return id;
+	}
+
+	/**
+	 * The type of this block.
+	 * <p>
+	 * Distinguish this type from the native type which is always the same for
+	 * this kind of block.
+	 */
+	public byte getType() {
+		return type;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see com.github.held03.jasityProtocol.base.util.NodeBlock#encode()

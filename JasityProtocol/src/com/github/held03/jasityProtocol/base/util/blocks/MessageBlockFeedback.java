@@ -119,6 +119,37 @@ public class MessageBlockFeedback extends NodeBlock {
 
 	}
 
+	/**
+	 * The id of this block relates to.
+	 */
+	public long getId() {
+		return id;
+	}
+
+	/**
+	 * The data offset of the received block.
+	 */
+	public int getOffset() {
+		return offset;
+	}
+
+	/**
+	 * The data length of the received block.
+	 */
+	public int getLength() {
+		return length;
+	}
+
+	/**
+	 * The type of this block.
+	 * <p>
+	 * Distinguish this type from the native type which is always the same for
+	 * this kind of block.
+	 */
+	public byte getType() {
+		return type;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see com.github.held03.jasityProtocol.base.util.NodeBlock#encode()

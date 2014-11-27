@@ -124,6 +124,23 @@ public class Hello extends NodeBlock {
 
 	}
 
+	/**
+	 * The version of the node which sent this.
+	 */
+	public long getVersion() {
+		return version;
+	}
+
+	/**
+	 * The type of this block.
+	 * <p>
+	 * Distinguish this type from the native type which is always the same for
+	 * this kind of block.
+	 */
+	public byte getType() {
+		return type;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see com.github.held03.jasityProtocol.base.util.NodeBlock#encode()
