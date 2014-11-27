@@ -24,7 +24,7 @@
  *
  */
 
-package com.github.held03.jasityProtocol.util;
+package com.github.held03.jasityProtocol.base.util;
 
 import java.util.ArrayList;
 import java.util.Collections;

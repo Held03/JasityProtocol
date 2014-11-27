@@ -26,9 +26,6 @@
 
 package com.github.held03.jasityProtocol.base;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,13 +34,14 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.github.held03.jasityProtocol.base.util.PingManager;
+import com.github.held03.jasityProtocol.base.util.blocks.NodeBlock;
 import com.github.held03.jasityProtocol.interfaces.Address;
 import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
 import com.github.held03.jasityProtocol.interfaces.Message.Priority;
 import com.github.held03.jasityProtocol.interfaces.Node;
-import com.github.held03.jasityProtocol.util.PingManager;
 
 
 /**
@@ -57,180 +55,7 @@ import com.github.held03.jasityProtocol.util.PingManager;
 public class DefaultNode implements Node {
 
 	/**
-	 * A block containing other blocks.
-	 * 
-	 * <pre>
-	 * Structure:
-	 * 
-	 * - int: count of sub blocks
-	 *  { for every block
-	 *   - int: block size
-	 *   - block data
-	 *  }
-	 * </pre>
-	 * 
-	 * Can be used to compose multiple block into on sent block.
-	 */
-	public static final byte BLOCK_MULTIBLOCK = -1;
-
-	/**
-	 * Ignoring block.
-	 * 
-	 * <pre>
-	 * Structure:
-	 * 
-	 * - int: size
-	 * - byte[]: data(ignore-able)
-	 * </pre>
-	 * 
-	 * Ignoring data.
-	 * Can have purpose for cipher stuff.
-	 */
-	public static final byte BLOCK_IGNORE = 0;
-
-	/**
-	 * Handshake block.
-	 * <p>
-	 * Block about establishing and breaking connections. This is comparable
-	 * with the handshake in TCP. The sender send always its version code to let
-	 * the receiver handle compatibility.
-	 * 
-	 * <pre>
-	 * Structure:
-	 * 
-	 * - byte: type:
-	 *          0: Knock - request connection
-	 *          1: Hello - connection accepted
-	 *          2: Busy  - connection refused
-	 *          3: Bye   - connection closed
-	 * - long: version code
-	 * </pre>
-	 * 
-	 * Opening socket have first to send the <code>Knock</code> order. It's
-	 * allowed that both send it. The receiver of such an order has to answer
-	 * with either <code>Hello</code> to accept or <code>Busy</code> to deny.
-	 * <p>
-	 * If any one wants to break the connection it sends <code>Bye</code>.
-	 * Usually, the receiver answer with <code>Bye</code> but that is not
-	 * necessary. Due this lazy process it is possible that one node sends the
-	 * <code>Bye</code> command but the other node never receives it. Therefore
-	 * it is useful to check frequently the ping time by {@link #BLOCK_PING} and
-	 * if the ping fails multiple times the connection should be threat as dead.
-	 */
-	public static final byte BLOCK_HELLO = 1;
-
-	/**
-	 * Ping-Pong block.
-	 * <p>
-	 * Block about sending ping pong signals to check a connection.
-	 * <p>
-	 * Every ping has an ID. A pong answer with the ID of the originally ping.
-	 * So every pong can be assigned to a send ping. So it is possible to send
-	 * multiple pings.
-	 * 
-	 * <pre>
-	 * Structure:
-	 * 
-	 * - byte: type:
-	 *          0: Ping - request
-	 *          1: Pong - response
-	 * - long: ping ID
-	 * </pre>
-	 * 
-	 * The sender sends <code>Ping</code> with an ID. The receiver answers with
-	 * <code>Pong</code> and the same ID. Both nodes can send Pings
-	 * independently.
-	 */
-	public static final byte BLOCK_PING = 2;
-
-	/**
-	 * Message meta data block.
-	 * <p>
-	 * A block for general messages control.
-	 * 
-	 * <pre>
-	 * Structure:
-	 * 
-	 * - byte: type:
-	 *          0: New      - start new message
-	 *          1: Unknown  - received block about a unknown message
-	 *          2: Send     - completely send a message
-	 *          3: Complete - successfully received message
-	 *          4: Error    - message fail [TODO]
-	 *          5: WhatsUp  - too long no request
-	 *          6: Pending  - message is waiting in the queue
-	 * - long: message ID
-	 * - long: CRC checksum or zero (only parsed on NEW)
-	 * </pre>
-	 * 
-	 * The sender first sends the <code>New</code> command with the related ID
-	 * and a CRC checksum. Afterwards the sender sends all the blocks by
-	 * {@link #BLOCK_MESSAGE_BLOCK}. If the receiver receives a
-	 * {@link #BLOCK_MESSAGE_BLOCK} without knowing the message ID, is sends an
-	 * <code>Unknown</code> command and the sender answers with the
-	 * <code>New</code> command again exactly like above. If the sender sent all
-	 * block and received all {@link #BLOCK_MESSAGE_BLOCK_FEEDBACK}s about them,
-	 * it sends the <code>Send</code> command and the receiver answers with the
-	 * <code>Complete</code> command.
-	 * <p>
-	 * If any when an deep error occurs or the transmission was canceled any
-	 * how, any one writes <code>Error</code>. The other node can answer even
-	 * with <code>Error</code>, it like the <code>Bye</code> command of the
-	 * {@link #BLOCK_HELLO} block. If the receivers thinks the sending of
-	 * message hangs up, can send the <code>WhatsUp</code> command. The sender
-	 * can answer differently, either if the transmission was broken it answers
-	 * <code>Error</code>, if there is still some thing to send it answers
-	 * <code>Pending</code> also if it is still sending blocks. If the
-	 * transmission was successful it answers <code>Send</code> and the receiver
-	 * has to answer like above.
-	 */
-	public static final byte BLOCK_MESSAGE = 3;
-
-	/**
-	 * Data block of message.
-	 * <p>
-	 * Block containing data about a specific message.
-	 * 
-	 * <pre>
-	 * Structure:
-	 * 
-	 * - long: message ID
-	 * - int: data offset
-	 * - int: data length
-	 * - byte[]: message data
-	 * </pre>
-	 * 
-	 * The sender sends this to transmit data of a message. These blocks are
-	 * controlled by {@link #BLOCK_MESSAGE} and
-	 * {@link #BLOCK_MESSAGE_BLOCK_FEEDBACK}. The receiver of this block has to
-	 * answer with a {@link #BLOCK_MESSAGE_BLOCK_FEEDBACK}.
-	 */
-	public static final byte BLOCK_MESSAGE_BLOCK = 4;
-
-	/**
-	 * Feedback block for a message.
-	 * <p>
-	 * This sends the receiver of an block back to the sender to indicate if a
-	 * block was received or not, if no answer was send after a specific time
-	 * the block will be send again.
-	 * 
-	 * <pre>
-	 * Structure:
-	 * 
-	 * - long: message ID to answer to
-	 * - byte: answer:
-	 *         0: Acknowledge - get successfully block
-	 *         1: Repeat      - resent block
-	 * </pre>
-	 * 
-	 * The receiver of a {@link #BLOCK_MESSAGE_BLOCK} answers with this block
-	 * either by sending the <code>Acknowledge</code> command on success or the
-	 * <code>Repeat</code> if something failed.
-	 */
-	public static final byte BLOCK_MESSAGE_BLOCK_FEEDBACK = 5;
-
-	/**
-	 * The oldest version the current one can handle due compatibility.
+	 * The oldest version which the current one can handle due compatibility.
 	 * <p>
 	 * The version codes depends only on this implementation. Other nodes may
 	 * have different version codes.
@@ -339,47 +164,9 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public void receivedBlock(final byte[] block) {
-		try (ByteArrayInputStream in = new ByteArrayInputStream(block); DataInputStream dis = new DataInputStream(in)) {
+		NodeBlock nb = NodeBlock.decodeBlock(block);
 
-			switch (dis.readByte()) {
-			case BLOCK_MULTIBLOCK:
-				int count = dis.readInt();
-				int len;
-				byte[] buf;
-				for (int i = 0; i < count; i++) {
-					len = dis.readInt();
-					buf = new byte[len];
-					dis.read(buf);
-					// call recursively
-					receivedBlock(buf);
-				}
-				break;
 
-			case BLOCK_HELLO:
-				//TODO
-				break;
-
-			case BLOCK_PING:
-				int type = dis.readByte();
-				long id = dis.readLong();
-
-				switch (type) {
-				case 0: // Ping
-					// TODO send pong with id.
-					break;
-
-				case 1: // Pong
-					pingManager.addPong(id);
-					break;
-				}
-
-				break;
-
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 	}
 
