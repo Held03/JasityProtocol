@@ -202,6 +202,8 @@ public abstract class NodeBlock {
 	 * Structure:
 	 * 
 	 * - long: message ID to answer to
+	 * - int: data offset
+	 * - int: data length
 	 * - byte: answer:
 	 *         0: Acknowledge - get successfully block
 	 *         1: Repeat      - resent block
