@@ -24,7 +24,7 @@
  *
  */
 
-package com.github.held03.jasityProtocol.base.managedCon;
+package com.github.held03.jasityProtocol.base;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,6 +36,7 @@ import java.nio.ByteBuffer;
 
 import com.github.held03.jasityProtocol.interfaces.BinaryMessage;
 import com.github.held03.jasityProtocol.interfaces.Message;
+import com.github.held03.jasityProtocol.interfaces.MessageCoder;
 
 
 /**

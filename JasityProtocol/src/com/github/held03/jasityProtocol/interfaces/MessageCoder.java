@@ -24,11 +24,9 @@
  *
  */
 
-package com.github.held03.jasityProtocol.base.managedCon;
+package com.github.held03.jasityProtocol.interfaces;
 
 import java.nio.ByteBuffer;
-
-import com.github.held03.jasityProtocol.interfaces.Message;
 
 
 /**

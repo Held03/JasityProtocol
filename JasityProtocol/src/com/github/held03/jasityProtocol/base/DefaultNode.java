@@ -30,6 +30,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -46,6 +47,7 @@ import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
 import com.github.held03.jasityProtocol.interfaces.Message.Priority;
+import com.github.held03.jasityProtocol.interfaces.MessageCoder;
 import com.github.held03.jasityProtocol.interfaces.Node;
 
 
@@ -130,6 +132,14 @@ public class DefaultNode implements Node {
 	protected final Connection connection;
 
 	/**
+	 * The coder this node uses to encode and decode messages.
+	 * <p>
+	 * <b>Note:</b> It is essential that the local and the remote node has the
+	 * same coder or tow compatible ones.
+	 */
+	protected MessageCoder coder = new SerializerCoder(); // TODO use factory
+
+	/**
 	 * Connected flag.
 	 * <p>
 	 * It is <code>true</code> if the the connection to the remote node was
@@ -151,6 +161,16 @@ public class DefaultNode implements Node {
 	 * System node blocks to send.
 	 */
 	protected LinkedList<NodeBlock> blocks = new LinkedList<NodeBlock>();
+
+	/**
+	 * Queue of messages waiting to send.
+	 */
+	protected PriorityQueue<SendingMessage> sendingQueue = new PriorityQueue<SendingMessage>();
+
+	/**
+	 * List of currently receiving messages.
+	 */
+	protected LinkedList<MessageContainer> receivingList = new LinkedList<MessageContainer>();
 
 	/**
 	 * The current state of the Node.
@@ -216,7 +236,7 @@ public class DefaultNode implements Node {
 				/*
 				 * Answer with akc.
 				 */
-				blocks.offer(new Hello(Hello.TYPE_HELLO, CURRENT_VERSION));
+				sendBlock(new Hello(Hello.TYPE_HELLO, CURRENT_VERSION));
 
 				break;
 
@@ -256,7 +276,7 @@ public class DefaultNode implements Node {
 				 * Answer the ping directly.
 				 * The ping has a priority.
 				 */
-				blocks.addFirst(new Ping(Ping.TYPE_PONG, ping.getId()));
+				sendBlock(new Ping(Ping.TYPE_PONG, ping.getId()), true);
 
 				break;
 
@@ -297,6 +317,29 @@ public class DefaultNode implements Node {
 		return null;
 	}
 
+	/**
+	 * Queue a node block for sending.
+	 * 
+	 * @param nb the node block to send
+	 */
+	protected void sendBlock(final NodeBlock nb) {
+		sendBlock(nb, false);
+	}
+
+	/**
+	 * Queue a node block for sending.
+	 * 
+	 * @param nb the node block to send
+	 * @param first if <code>true</code>, add the block at head of the queue
+	 */
+	protected void sendBlock(final NodeBlock nb, final boolean first) {
+		if (first) {
+			blocks.addFirst(nb);
+		} else {
+			blocks.add(nb);
+		}
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see
@@ -305,8 +348,7 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public Future<Boolean> sendMessage(final Message msg) {
-		// TODO Auto-generated method stub
-		return null;
+		return sendMessage(msg, Priority.NORMAL);
 	}
 
 	/*
@@ -318,8 +360,9 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public Future<Boolean> sendMessage(final Message msg, final Priority priority) {
-		// TODO Auto-generated method stub
-		return null;
+		SendingMessage sm = new SendingMessage(getNextId(), coder.codeMessage(msg).array(), priority);
+		sendingQueue.add(sm);
+		return sm;
 	}
 
 	/*
