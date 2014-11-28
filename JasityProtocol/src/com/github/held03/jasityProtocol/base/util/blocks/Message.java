@@ -26,11 +26,7 @@
 
 package com.github.held03.jasityProtocol.base.util.blocks;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 
 /**
@@ -197,52 +193,39 @@ public class Message extends NodeBlock {
 	 * @see com.github.held03.jasityProtocol.base.util.NodeBlock#encode()
 	 */
 	@Override
-	public byte[] encode() {
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); DataOutputStream dout = new DataOutputStream(out)) {
-			/*
-			 * Write the native type.
-			 */
-			dout.writeByte(getNativeType());
+	public ByteBuffer encode() {
+		ByteBuffer bb = ByteBuffer.allocate(getSize());
 
-			/*
-			 * Write the actual data.
-			 */
-			dout.writeByte(type);
-			dout.writeLong(id);
-			dout.writeLong(crc);
+		/*
+		 * Write the native type.
+		 */
+		bb.put(getNativeType());
 
-			/*
-			 * Flush and return data.
-			 */
-			dout.flush();
+		/*
+		 * Write the actual data.
+		 */
+		bb.put(type);
+		bb.putLong(id);
+		bb.putLong(crc);
 
-			return out.toByteArray();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return new byte[0];
+		/*
+		 * Flush and return data.
+		 */
+		bb.rewind();
+		return bb;
 	}
 
 	/*
 	 * (non-Javadoc)
 	 */
 	@Override
-	public Message decode(final byte[] data, final int offset, final int length) {
-		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
-				DataInputStream dis = new DataInputStream(in)) {
-			/*
-			 * Get the data.
-			 */
-			type = dis.readByte();
-			id = dis.readLong();
-			crc = dis.readLong();
-
-			return this;
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public Message decode(final ByteBuffer data) {
+		/*
+		 * Get the data.
+		 */
+		type = data.get();
+		id = data.getLong();
+		crc = data.getLong();
 
 		return this;
 	}

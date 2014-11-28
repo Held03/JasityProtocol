@@ -26,11 +26,7 @@
 
 package com.github.held03.jasityProtocol.base.util.blocks;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 
 /**
@@ -128,30 +124,26 @@ public class Ping extends NodeBlock {
 	 * @see com.github.held03.jasityProtocol.base.util.NodeBlock#encode()
 	 */
 	@Override
-	public byte[] encode() {
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); DataOutputStream dout = new DataOutputStream(out)) {
-			/*
-			 * Write the native type.
-			 */
-			dout.writeByte(getNativeType());
+	public ByteBuffer encode() {
+		ByteBuffer bb = ByteBuffer.allocate(getSize());
 
-			/*
-			 * Write the actual data.
-			 */
-			dout.writeByte(type);
-			dout.writeLong(id);
+		/*
+		 * Write the native type.
+		 */
+		bb.put(getNativeType());
 
-			/*
-			 * Flush and return data.
-			 */
-			dout.flush();
+		/*
+		 * Write the actual data.
+		 */
+		bb.put(type);
+		bb.putLong(id);
 
-			return out.toByteArray();
+		/*
+		 * Flush and return data.
+		 */
+		bb.rewind();
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return new byte[0];
+		return bb;
 	}
 
 	/*
@@ -161,20 +153,13 @@ public class Ping extends NodeBlock {
 	 * [], int, int)
 	 */
 	@Override
-	public Ping decode(final byte[] data, final int offset, final int length) {
-		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
-				DataInputStream dis = new DataInputStream(in)) {
-			/*
-			 * Get the data.
-			 */
-			type = dis.readByte();
-			id = dis.readLong();
+	public Ping decode(final ByteBuffer data) {
 
-			return this;
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		/*
+		 * Get the data.
+		 */
+		type = data.get();
+		id = data.getLong();
 
 		return this;
 	}

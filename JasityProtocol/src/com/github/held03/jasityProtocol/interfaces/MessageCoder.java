@@ -40,7 +40,7 @@ import java.nio.ByteBuffer;
  */
 public interface MessageCoder {
 
-	public ByteBuffer codeMessage(Message msg);
+	public ByteBuffer encodeMessage(Message msg);
 
 	public Message decodeMessage(ByteBuffer buffer);
 }

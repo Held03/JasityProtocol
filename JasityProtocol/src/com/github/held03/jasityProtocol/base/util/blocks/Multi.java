@@ -26,11 +26,7 @@
 
 package com.github.held03.jasityProtocol.base.util.blocks;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 
 /**
@@ -81,86 +77,79 @@ public class Multi extends NodeBlock {
 
 	/*
 	 * (non-Javadoc)
+	 * @see com.github.held03.jasityProtocol.base.util.blocks.NodeBlock#encode()
 	 */
 	@Override
-	public Multi decode(final byte[] data, final int offset, final int length) {
-		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
-				DataInputStream dis = new DataInputStream(in)) {
+	public ByteBuffer encode() {
+		ByteBuffer bb = ByteBuffer.allocate(getSize());
+
+		bb.put(getNativeType());
+
+		/*
+		 * Get count and create an appropriated array.
+		 */
+		bb.putInt(subBlocks.length);
+
+		ByteBuffer buf;
+
+		/*
+		 * Decode all entries.
+		 */
+		for (int i = 0; i < subBlocks.length; i++) {
 			/*
-			 * Get count and create an appropriated array.
+			 * Get encoding of the entry
 			 */
-			int count = dis.readInt();
-			subBlocks = new NodeBlock[count];
-
-			int len;
-			byte[] buf;
+			buf = subBlocks[i].encode();
 
 			/*
-			 * Decode all entries.
+			 * Write length and data out.
 			 */
-			for (int i = 0; i < count; i++) {
-				/*
-				 * Get length and content of the entry
-				 */
-				len = dis.readInt();
-				buf = new byte[len];
-				dis.read(buf);
-
-				/*
-				 * Add it to array.
-				 */
-				subBlocks[i] = NodeBlock.decodeBlock(buf);
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
+			bb.putInt(buf.remaining());
+			bb.put(buf);
 		}
 
-		return this;
+		bb.rewind();
+		return bb;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see com.github.held03.jasityProtocol.base.util.blocks.NodeBlock#encode()
 	 */
 	@Override
-	public byte[] encode() {
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); DataOutputStream dout = new DataOutputStream(out)) {
+	public Multi decode(final ByteBuffer data) {
 
-			dout.writeByte(getNativeType());
+		/*
+		 * Get count and create an appropriated array.
+		 */
+		int count = data.getInt();
+		subBlocks = new NodeBlock[count];
+
+		int len;
+		int limit = data.limit();
+		int nextPos;
+		ByteBuffer buf;
+
+		/*
+		 * Decode all entries.
+		 */
+		for (int i = 0; i < count; i++) {
+			/*
+			 * Get length and content of the entry
+			 */
+			len = data.getInt();
+			nextPos = data.position() + len;
+			data.limit(nextPos);
 
 			/*
-			 * Get count and create an appropriated array.
+			 * Add it to array.
 			 */
-			dout.writeInt(subBlocks.length);
+			subBlocks[i] = NodeBlock.decodeBlock(data);
 
-			byte[] buf;
-
-			/*
-			 * Decode all entries.
-			 */
-			for (int i = 0; i < subBlocks.length; i++) {
-				/*
-				 * Get encoding of the entry
-				 */
-				buf = subBlocks[i].encode();
-
-				/*
-				 * Write length and data out.
-				 */
-				dout.writeInt(buf.length);
-				dout.write(buf);
-			}
-
-			dout.flush();
-
-			return out.toByteArray();
-
-		} catch (IOException e) {
-			e.printStackTrace();
+			data.position(nextPos);
+			data.limit(limit);
 		}
 
-		return null;
+		return this;
 	}
 
 	/*

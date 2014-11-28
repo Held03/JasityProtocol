@@ -26,9 +26,7 @@
 
 package com.github.held03.jasityProtocol.base.util.blocks;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import com.github.held03.jasityProtocol.interfaces.Node;
 
@@ -231,18 +229,18 @@ public abstract class NodeBlock {
 	 * Encodes the block into a byte array.
 	 * <p>
 	 * These block are able to be sent over network. They can be parsed with
-	 * {@link #decode(byte[])}.
+	 * {@link #decode(ByteBuffer)}.
 	 * <p>
 	 * Usually only one block is sent in one message, but with the multi block
 	 * some can be joint to one again.
 	 * <p>
 	 * <b>Note:</b> This method will add a byte to the beginning of the data
 	 * array which defines this block. This whole array can be parsed by
-	 * {@link #decode(byte[])}
+	 * {@link #decode(ByteBuffer)}
 	 * 
 	 * @return a byte array representing this block
 	 */
-	public abstract byte[] encode();
+	public abstract ByteBuffer encode();
 
 	/**
 	 * Gets the size of bytes this block would takes encoded.
@@ -267,26 +265,7 @@ public abstract class NodeBlock {
 	 * @param data the data to parse
 	 * @return the block represented by the data
 	 */
-	public NodeBlock decode(final byte[] data) {
-		return (decode(data, 0, data.length));
-	}
-
-	/**
-	 * Decodes the array into this block.
-	 * <p>
-	 * Note this data must fit the encoding of this block. If you don't know the
-	 * type but it stands at the beginning use {@link #decodeBlock(byte[])}.
-	 * <p>
-	 * <b>Note:</b> This method can handle the leading type byte which is added
-	 * to the front of a block by the {@link #encode()} method. you have to
-	 * remove it or call {@link #decodeBlock(byte[])} which will handle it.
-	 * 
-	 * @param data the data to parse
-	 * @param offset the beginning of the data in the array
-	 * @param length the length of the data in the array from the offset
-	 * @return the block represented by the data
-	 */
-	public abstract NodeBlock decode(final byte[] data, final int offset, final int length);
+	public abstract NodeBlock decode(final ByteBuffer data);
 
 	/**
 	 * Returns the type byte of the block.
@@ -309,7 +288,7 @@ public abstract class NodeBlock {
 	 * @return the decoded block
 	 */
 	public static NodeBlock decodeBlock(final byte[] data) {
-		return decodeBlock(data, 0, data.length);
+		return decodeBlock(ByteBuffer.wrap(data));
 	}
 
 	/**
@@ -327,35 +306,47 @@ public abstract class NodeBlock {
 	 * @return the decoded block
 	 */
 	public static NodeBlock decodeBlock(final byte[] data, final int offset, final int length) {
-		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
-				DataInputStream dis = new DataInputStream(in)) {
+		return decodeBlock(ByteBuffer.wrap(data, offset, length));
+	}
 
-			switch (dis.readByte()) {
-			case BLOCK_MULTIBLOCK:
-				return new Multi().decode(data, 1, length - 1);
+	/**
+	 * Decodes a block.
+	 * <p>
+	 * This block has to start with the type of the block. This method will
+	 * detect it and parse the right kind of block.
+	 * <p>
+	 * Note the array returned by {@link #encode()} can be perfectly parsed by
+	 * this method.
+	 * 
+	 * @param data the data to parse
+	 * @param offset the beginning of the data in the array
+	 * @param length the length of the data in the array from the offset
+	 * @return the decoded block
+	 */
+	public static NodeBlock decodeBlock(final ByteBuffer data) {
 
-			case BLOCK_HELLO:
-				return new Hello().decode(data, 1, length - 1);
+		switch (data.get()) {
+		case BLOCK_MULTIBLOCK:
+			return new Multi().decode(data);
 
-			case BLOCK_PING:
-				return new Ping().decode(data, 1, length - 1);
+		case BLOCK_HELLO:
+			return new Hello().decode(data);
 
-			case BLOCK_MESSAGE:
-				return new Message().decode(data, 1, length - 1);
+		case BLOCK_PING:
+			return new Ping().decode(data);
 
-			case BLOCK_MESSAGE_BLOCK:
-				return new MessageBlock().decode(data, 1, length - 1);
+		case BLOCK_MESSAGE:
+			return new Message().decode(data);
 
-			case BLOCK_MESSAGE_BLOCK_FEEDBACK:
-				return new MessageBlockFeedback().decode(data, 1, length - 1);
+		case BLOCK_MESSAGE_BLOCK:
+			return new MessageBlock().decode(data);
 
-			case BLOCK_IGNORE:
-				return new Ignore().decode(data, 1, length - 1);
+		case BLOCK_MESSAGE_BLOCK_FEEDBACK:
+			return new MessageBlockFeedback().decode(data);
 
-			}
+		case BLOCK_IGNORE:
+			return new Ignore().decode(data);
 
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 
 		return null;

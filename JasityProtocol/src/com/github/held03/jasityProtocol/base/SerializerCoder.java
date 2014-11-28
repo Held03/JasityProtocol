@@ -60,7 +60,7 @@ public class SerializerCoder implements MessageCoder {
 	 * (com.github.held03.jasityProtocol.interfaces.Message)
 	 */
 	@Override
-	public ByteBuffer codeMessage(final Message msg) {
+	public ByteBuffer encodeMessage(final Message msg) {
 		if (msg instanceof BinaryMessage) {
 			ByteBuffer buf = ((BinaryMessage) msg).codeMessage();
 

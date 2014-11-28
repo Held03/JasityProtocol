@@ -26,11 +26,7 @@
 
 package com.github.held03.jasityProtocol.base.util.blocks;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 
@@ -100,30 +96,25 @@ public class Ignore extends NodeBlock {
 	 * @see com.github.held03.jasityProtocol.base.util.NodeBlock#encode()
 	 */
 	@Override
-	public byte[] encode() {
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); DataOutputStream dout = new DataOutputStream(out)) {
-			/*
-			 * Write the native type.
-			 */
-			dout.writeByte(getNativeType());
+	public ByteBuffer encode() {
+		ByteBuffer bb = ByteBuffer.allocate(getSize());
 
-			/*
-			 * Write the actual data.
-			 */
-			dout.writeInt(data.length);
-			dout.write(data);
+		/*
+		 * Write the native type.
+		 */
+		bb.put(getNativeType());
 
-			/*
-			 * Flush and return data.
-			 */
-			dout.flush();
+		/*
+		 * Write the actual data.
+		 */
+		bb.putInt(data.length);
+		bb.put(data);
 
-			return out.toByteArray();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return new byte[0];
+		/*
+		 * Flush and return data.
+		 */
+		bb.rewind();
+		return bb;
 	}
 
 	/*
@@ -133,23 +124,15 @@ public class Ignore extends NodeBlock {
 	 * [], int, int)
 	 */
 	@Override
-	public Ignore decode(final byte[] data, final int offset, final int length) {
-		try (ByteArrayInputStream in = new ByteArrayInputStream(data, offset, length);
-				DataInputStream dis = new DataInputStream(in)) {
-			/*
-			 * Get the data.
-			 */
-			int len = dis.readInt();
+	public Ignore decode(final ByteBuffer data) {
+		/*
+		 * Get the data.
+		 */
+		int len = data.getInt();
 
-			this.data = new byte[len];
+		this.data = new byte[len];
 
-			dis.read(this.data);
-
-			return this;
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		data.get(this.data);
 
 		return this;
 	}

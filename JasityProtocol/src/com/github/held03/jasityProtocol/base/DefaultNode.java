@@ -360,7 +360,7 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public Future<Boolean> sendMessage(final Message msg, final Priority priority) {
-		SendingMessage sm = new SendingMessage(getNextId(), coder.codeMessage(msg).array(), priority);
+		SendingMessage sm = new SendingMessage(getNextId(), coder.encodeMessage(msg).array(), priority);
 		sendingQueue.add(sm);
 		return sm;
 	}
