@@ -29,13 +29,18 @@ package com.github.held03.jasityProtocol.base;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.github.held03.jasityProtocol.base.util.PingManager;
+import com.github.held03.jasityProtocol.base.util.blocks.Hello;
+import com.github.held03.jasityProtocol.base.util.blocks.Ignore;
+import com.github.held03.jasityProtocol.base.util.blocks.Multi;
 import com.github.held03.jasityProtocol.base.util.blocks.NodeBlock;
+import com.github.held03.jasityProtocol.base.util.blocks.Ping;
 import com.github.held03.jasityProtocol.interfaces.Address;
 import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
@@ -142,6 +147,11 @@ public class DefaultNode implements Node {
 	protected PingManager pingManager = new PingManager();
 
 	/**
+	 * 
+	 */
+	protected LinkedList<NodeBlock> blocks = new LinkedList<NodeBlock>();
+
+	/**
 	 * The current state of the Node.
 	 */
 	protected State currentState = State.OPENING;
@@ -166,8 +176,98 @@ public class DefaultNode implements Node {
 	public void receivedBlock(final byte[] block) {
 		NodeBlock nb = NodeBlock.decodeBlock(block);
 
+		receivedBlock(nb);
+	}
 
+	protected void receivedBlock(final NodeBlock nb) {
+		switch (nb.getNativeType()) {
+		case NodeBlock.BLOCK_MULTIBLOCK:
+			Multi multi = (Multi) nb;
 
+			/*
+			 * Call receive recursively for every block
+			 */
+			for (NodeBlock sub : multi.getSubBlocks()) {
+				receivedBlock(sub);
+			}
+
+			break;
+
+		case NodeBlock.BLOCK_IGNORE:
+			Ignore ign = (Ignore) nb;
+
+			/*
+			 * Easily ignore it ;)
+			 */
+
+			break;
+
+		case NodeBlock.BLOCK_HELLO:
+			Hello hello = (Hello) nb;
+
+			switch (hello.getType()) {
+			case Hello.TYPE_KNOCK:
+				/*
+				 * Answer with akc.
+				 */
+				blocks.offer(new Hello(Hello.TYPE_HELLO, CURRENT_VERSION));
+
+				break;
+
+			case Hello.TYPE_HELLO:
+				/*
+				 * Sets node to available
+				 */
+				if (currentState.equals(State.OPENING)) {
+					currentState = State.CONNECTED;
+				}
+
+				break;
+
+			case Hello.TYPE_BUSY:
+				/*
+				 * Remote refused.
+				 * Close node.
+				 */
+			case Hello.TYPE_BYE:
+				/*
+				 * Remote closed node.
+				 * Close node.
+				 */
+				close();
+
+				break;
+			}
+
+			break;
+
+		case NodeBlock.BLOCK_PING:
+			Ping ping = (Ping) nb;
+
+			switch (ping.getType()) {
+			case Ping.TYPE_PING:
+				/*
+				 * Answer the ping directly.
+				 * The ping has a priority.
+				 */
+				blocks.addFirst(new Ping(Ping.TYPE_PONG, ping.getId()));
+
+				break;
+
+			case Ping.TYPE_PONG:
+				/*
+				 * Forward it to the ping manager.
+				 */
+				pingManager.addPong(ping.getId());
+
+			}
+
+			break;
+
+		case NodeBlock.BLOCK_MESSAGE:
+
+			break;
+		}
 	}
 
 	/*
