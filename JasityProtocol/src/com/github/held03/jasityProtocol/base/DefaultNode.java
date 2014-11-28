@@ -137,8 +137,9 @@ public class DefaultNode implements Node {
 	 */
 	protected boolean isOnline;
 
-
-
+	/**
+	 * The version of the remote
+	 */
 	protected long remoteVersionCode = -1;
 
 	/**
@@ -147,7 +148,7 @@ public class DefaultNode implements Node {
 	protected PingManager pingManager = new PingManager();
 
 	/**
-	 * 
+	 * System node blocks to send.
 	 */
 	protected LinkedList<NodeBlock> blocks = new LinkedList<NodeBlock>();
 
@@ -179,6 +180,11 @@ public class DefaultNode implements Node {
 		receivedBlock(nb);
 	}
 
+	/**
+	 * Process given node block.
+	 * 
+	 * @param nb the block to process
+	 */
 	protected void receivedBlock(final NodeBlock nb) {
 		switch (nb.getNativeType()) {
 		case NodeBlock.BLOCK_MULTIBLOCK:
