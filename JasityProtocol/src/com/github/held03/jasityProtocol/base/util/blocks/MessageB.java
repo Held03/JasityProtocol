@@ -38,15 +38,16 @@ import java.nio.ByteBuffer;
  * Structure:
  * 
  * - byte: type:
- *          0: New      - start new message
- *          1: Unknown  - received block about a unknown message
- *          2: Sent     - completely sent a message
- *          3: Complete - successfully received message
- *          4: Error    - message fail [TODO]
- *          5: WhatsUp  - too long no request
- *          6: Pending  - message is waiting in the queue
+ *          0: New       - start new message
+ *          1: Unknown   - received block about a unknown message
+ *          2: Sent      - completely sent a message
+ *          3: Complete  - successfully received message
+ *          4: ErrorSend - message sending fail
+ *          5: WhatsUp   - too long no request
+ *          6: Pending   - message is waiting in the queue
+ *          7: ErrorRece - message receiving fail
  * - long: message ID
- * - long: CRC checksum or zero (only parsed on NEW)
+ * - int: message size or zero (only parsed on NEW)
  * </pre>
  * 
  * The sender first sends the <code>New</code> command with the related ID and a
@@ -60,20 +61,24 @@ import java.nio.ByteBuffer;
  * <code>Complete</code> command.
  * <p>
  * If any when an deep error occurs or the transmission was canceled any how,
- * any one writes <code>Error</code>. The other node can answer even with
- * <code>Error</code>, it like the <code>Bye</code> command of the
- * {@link #BLOCK_HELLO} block. If the receivers thinks the sending of message
- * hangs up, can send the <code>WhatsUp</code> command. The sender can answer
- * differently, either if the transmission was broken it answers
- * <code>Error</code>, if there is still some thing to send it answers
- * <code>Pending</code> also if it is still sending blocks. If the transmission
- * was successful it answers <code>Send</code> and the receiver has to answer
- * like above.
+ * any one writes <code>ErrorSend</code> or <code>ErrorRece</code>. The other
+ * node can answer even with <code>ErrorRece</code> or <code>ErrorSend</code>,
+ * it is like the <code>Bye</code> command of the {@link #BLOCK_HELLO} block for
+ * a message. If the receivers thinks the sending of message hangs up, can send
+ * the <code>WhatsUp</code> command. The sender can answer differently, either
+ * if the transmission was broken it answers <code>ErrorSend</code>, if there is
+ * still some thing to send it answers <code>Pending</code> also if it is still
+ * sending blocks. If the transmission was successful it answers
+ * <code>Send</code> and the receiver has to answer like above.
+ * <p>
+ * <code>ErrorSend</code> is always send by the sender. <code>ErrorRece</code>
+ * is always send by the receiver. This is important to distinguish if a local
+ * or a remote message is canceled.
  * 
  * @see NodeBlock#BLOCK_MESSAGE
  * @author held03
  */
-public class Message extends NodeBlock {
+public class MessageB extends NodeBlock {
 
 	/**
 	 * Illegal block type.
@@ -101,9 +106,9 @@ public class Message extends NodeBlock {
 	public static final byte TYPE_COMPLETE = 3;
 
 	/**
-	 * Message fail [TODO].
+	 * message sending fail.
 	 */
-	public static final byte TYPE_ERROR = 4;
+	public static final byte TYPE_ERROR_SEND = 4;
 
 	/**
 	 * Too long no request.
@@ -116,14 +121,19 @@ public class Message extends NodeBlock {
 	public static final byte TYPE_PENDING = 6;
 
 	/**
+	 * message receiving fail.
+	 */
+	public static final byte TYPE_ERROR_RECIEVE = 7;
+
+	/**
 	 * The message id about it is.
 	 */
 	long id = 0;
 
 	/**
-	 * CRC checksum or zero (only parsed on NEW).
+	 * The size of the message or zero (only parsed on NEW).
 	 */
-	long crc = 0;
+	int size = 0;
 
 	/**
 	 * The type of this block.
@@ -136,7 +146,7 @@ public class Message extends NodeBlock {
 	/**
 	 * Creates an empty message.
 	 */
-	public Message() {
+	public MessageB() {
 
 	}
 
@@ -146,21 +156,21 @@ public class Message extends NodeBlock {
 	 * @param type the type of this block
 	 * @param id the id of the message this is about
 	 */
-	public Message(final byte type, final long id) {
+	public MessageB(final byte type, final long id) {
 		this.type = type;
 		this.id = id;
 	}
 
 	/**
-	 * Creates a new message block with given id and crc.
+	 * Creates a new message block with given id and size.
 	 * 
 	 * @param id the id of the message this is about
-	 * @param crc the crc check sum of the message
+	 * @param size the size of the message
 	 */
-	public Message(final long id, final long crc) {
+	public MessageB(final long id, final int size) {
 		this.type = TYPE_NEW;
 		this.id = id;
-		this.crc = crc;
+		this.size = size;
 
 	}
 
@@ -172,10 +182,13 @@ public class Message extends NodeBlock {
 	}
 
 	/**
-	 * CRC checksum or zero (only parsed on NEW).
+	 * The message size or zero (only parsed on NEW).
+	 * <p>
+	 * Don't get confused with {@link #getSize()} which returns the size of this
+	 * block, instance of the length of the data of the message.
 	 */
-	public long getCrc() {
-		return crc;
+	public int getMsgSize() {
+		return size;
 	}
 
 	/**
@@ -206,7 +219,7 @@ public class Message extends NodeBlock {
 		 */
 		bb.put(type);
 		bb.putLong(id);
-		bb.putLong(crc);
+		bb.putInt(size);
 
 		/*
 		 * Flush and return data.
@@ -219,13 +232,13 @@ public class Message extends NodeBlock {
 	 * (non-Javadoc)
 	 */
 	@Override
-	public Message decode(final ByteBuffer data) {
+	public MessageB decode(final ByteBuffer data) {
 		/*
 		 * Get the data.
 		 */
 		type = data.get();
 		id = data.getLong();
-		crc = data.getLong();
+		size = data.getInt();
 
 		return this;
 	}

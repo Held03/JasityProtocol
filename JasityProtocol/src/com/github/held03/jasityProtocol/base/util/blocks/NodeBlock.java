@@ -138,15 +138,16 @@ public abstract class NodeBlock {
 	 * Structure:
 	 * 
 	 * - byte: type:
-	 *          0: New      - start new message
-	 *          1: Unknown  - received block about a unknown message
-	 *          2: Sent     - completely sent a message
-	 *          3: Complete - successfully received message
-	 *          4: Error    - message fail [TODO]
-	 *          5: WhatsUp  - too long no request
-	 *          6: Pending  - message is waiting in the queue
+	 *          0: New       - start new message
+	 *          1: Unknown   - received block about a unknown message
+	 *          2: Sent      - completely sent a message
+	 *          3: Complete  - successfully received message
+	 *          4: ErrorSend - message sending fail
+	 *          5: WhatsUp   - too long no request
+	 *          6: Pending   - message is waiting in the queue
+	 *          7: ErrorRece - message receiving fail
 	 * - long: message ID
-	 * - long: CRC checksum or zero (only parsed on NEW)
+	 * - int: message size or zero (only parsed on NEW)
 	 * </pre>
 	 * 
 	 * The sender first sends the <code>New</code> command with the related ID
@@ -160,15 +161,20 @@ public abstract class NodeBlock {
 	 * <code>Complete</code> command.
 	 * <p>
 	 * If any when an deep error occurs or the transmission was canceled any
-	 * how, any one writes <code>Error</code>. The other node can answer even
-	 * with <code>Error</code>, it like the <code>Bye</code> command of the
-	 * {@link #BLOCK_HELLO} block. If the receivers thinks the sending of
-	 * message hangs up, can send the <code>WhatsUp</code> command. The sender
-	 * can answer differently, either if the transmission was broken it answers
-	 * <code>Error</code>, if there is still some thing to send it answers
-	 * <code>Pending</code> also if it is still sending blocks. If the
-	 * transmission was successful it answers <code>Send</code> and the receiver
-	 * has to answer like above.
+	 * how, any one writes <code>ErrorSend</code> or <code>ErrorRece</code>. The
+	 * other node can answer even with <code>ErrorRece</code> or
+	 * <code>ErrorSend</code>, it is like the <code>Bye</code> command of the
+	 * {@link #BLOCK_HELLO} block for a message. If the receivers thinks the
+	 * sending of message hangs up, can send the <code>WhatsUp</code> command.
+	 * The sender can answer differently, either if the transmission was broken
+	 * it answers <code>ErrorSend</code>, if there is still some thing to send
+	 * it answers <code>Pending</code> also if it is still sending blocks. If
+	 * the transmission was successful it answers <code>Send</code> and the
+	 * receiver has to answer like above.
+	 * <p>
+	 * <code>ErrorSend</code> is always send by the sender.
+	 * <code>ErrorRece</code> is always send by the receiver. This is important
+	 * to distinguish if a local or a remote message is canceled.
 	 */
 	public static final byte BLOCK_MESSAGE = 3;
 
@@ -336,7 +342,7 @@ public abstract class NodeBlock {
 			return new Ping().decode(data);
 
 		case BLOCK_MESSAGE:
-			return new Message().decode(data);
+			return new MessageB().decode(data);
 
 		case BLOCK_MESSAGE_BLOCK:
 			return new MessageBlock().decode(data);

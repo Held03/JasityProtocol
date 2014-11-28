@@ -24,7 +24,7 @@
  *
  */
 
-package com.github.held03.jasityProtocol.base;
+package com.github.held03.jasityProtocol.base.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -312,6 +312,10 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 		sentBlocks.add(mbd); // add new instance
 
 		return sendBlock(offset, length);
+	}
+
+	public boolean wasSuccessful() {
+		return (finished != null ? finished : false);
 	}
 
 	/*

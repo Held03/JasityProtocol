@@ -24,27 +24,28 @@
  *
  */
 
-package com.github.held03.jasityProtocol.base;
+package com.github.held03.jasityProtocol.base.util;
 
 
 /**
- * Contains the binary data of a message.
- * <p>
- * This class contains the binary data of a message used to send or receive it.
- * 
- * @author adam
+ * @author held03
  */
-public class MessageContainer {
+public class MessageBlockFragment {
 
-	final byte[] binaryData;
-	final long messageID;
+	public byte[] data;
+	public int offset;
+
+	public long id;
+
+	public long time = System.currentTimeMillis();
 
 	/**
 	 * 
 	 */
-	public MessageContainer(final long messageID, final byte[] binaryData) {
-		this.messageID = messageID;
-		this.binaryData = binaryData;
+	public MessageBlockFragment(final long id, final byte[] data, final int offset) {
+		this.id = id;
+		this.data = data;
+		this.offset = offset;
 
 	}
 

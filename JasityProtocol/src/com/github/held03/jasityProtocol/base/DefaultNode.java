@@ -27,6 +27,7 @@
 package com.github.held03.jasityProtocol.base;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -36,9 +37,15 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.github.held03.jasityProtocol.base.util.MessageBlockFragment;
+import com.github.held03.jasityProtocol.base.util.MessageContainer;
 import com.github.held03.jasityProtocol.base.util.PingManager;
+import com.github.held03.jasityProtocol.base.util.SendingMessage;
 import com.github.held03.jasityProtocol.base.util.blocks.Hello;
 import com.github.held03.jasityProtocol.base.util.blocks.Ignore;
+import com.github.held03.jasityProtocol.base.util.blocks.MessageB;
+import com.github.held03.jasityProtocol.base.util.blocks.MessageBlock;
+import com.github.held03.jasityProtocol.base.util.blocks.MessageBlockFeedback;
 import com.github.held03.jasityProtocol.base.util.blocks.Multi;
 import com.github.held03.jasityProtocol.base.util.blocks.NodeBlock;
 import com.github.held03.jasityProtocol.base.util.blocks.Ping;
@@ -163,6 +170,11 @@ public class DefaultNode implements Node {
 	protected LinkedList<NodeBlock> blocks = new LinkedList<NodeBlock>();
 
 	/**
+	 * Set of received blocks without knowing the message of it.
+	 */
+	protected HashSet<MessageBlockFragment> fragments = new HashSet<MessageBlockFragment>();
+
+	/**
 	 * Queue of messages waiting to send.
 	 */
 	protected PriorityQueue<SendingMessage> sendingQueue = new PriorityQueue<SendingMessage>();
@@ -170,7 +182,7 @@ public class DefaultNode implements Node {
 	/**
 	 * List of currently receiving messages.
 	 */
-	protected LinkedList<MessageContainer> receivingList = new LinkedList<MessageContainer>();
+	protected HashMap<Long, MessageContainer> receivingList = new HashMap<Long, MessageContainer>();
 
 	/**
 	 * The current state of the Node.
@@ -291,9 +303,282 @@ public class DefaultNode implements Node {
 			break;
 
 		case NodeBlock.BLOCK_MESSAGE:
+			MessageB msg = (MessageB) nb;
+
+			switch (msg.getType()) {
+			/*
+			 * Handle receiving operations.
+			 */
+			case MessageB.TYPE_NEW:
+				if (receivingList.containsKey(msg.getId())) {
+					/*
+					 * Ignore if already known.
+					 */
+				} else {
+					/*
+					 * Creating new container to store the new message.
+					 */
+					MessageContainer mc = new MessageContainer(msg.getId(), new byte[msg.getMsgSize()]);
+
+					receivingList.put(msg.getId(), mc);
+
+					/*
+					 * Search for already received blocks.
+					 */
+					HashSet<MessageBlockFragment> rm = new HashSet<MessageBlockFragment>();
+
+					for (MessageBlockFragment mbf : fragments) {
+						if (mbf.id == msg.getId()) {
+							/*
+							 * Mark for remove.
+							 */
+							rm.add(mbf);
+
+							/*
+							 * Add insert data.
+							 */
+							mc.putData(mbf.data, mbf.offset);
+
+							/*
+							 * Send acknowledge.
+							 */
+							sendBlock(new MessageBlockFeedback(MessageBlockFeedback.TYPE_ACKNOWLEDGE, mbf.id,
+									mbf.offset, mbf.data.length));
+						}
+					}
+				}
+
+
+				break;
+
+			case MessageB.TYPE_SENT:
+
+				/*
+				 * Remote verifies that a message have been sent.
+				 * So let it deliver.
+				 */
+
+				if (receivingList.containsKey(msg.getId())) {
+					/*
+					 * Pull message from map and decode it.
+					 */
+					MessageContainer mc = receivingList.remove(msg.getId());
+
+					Message m = coder.decodeMessage(ByteBuffer.wrap(mc.getData()));
+
+					/*
+					 * Send COMPLETE back.
+					 */
+					sendBlock(new MessageB(MessageB.TYPE_COMPLETE, msg.getId()));
+
+					/*
+					 * Deliver message to listeners.
+					 * TODO: This should be done by an special thread.
+					 */
+					deliverMessage(m);
+
+				} else {
+					/*
+					 * Ignore if no more present.
+					 * But answer with COMPLETE.
+					 */
+
+					sendBlock(new MessageB(MessageB.TYPE_COMPLETE, msg.getId()));
+				}
+
+				break;
+
+			case MessageB.TYPE_ERROR_SEND:
+
+				if (receivingList.containsKey(msg.getId())) {
+					/*
+					 * Remove due cancellation.
+					 */
+					receivingList.remove(msg.getId());
+
+				} else {
+					/*
+					 * If already removed, ignore it.
+					 */
+				}
+
+				break;
+
+			case MessageB.TYPE_PENDING:
+
+				if (receivingList.containsKey(msg.getId())) {
+					/*
+					 * If exist the related message, update the time stamp.
+					 */
+					receivingList.get(msg.getId()).setUpdate();
+				} else {
+					/*
+					 * Ignore it other wise.
+					 */
+				}
+
+				break;
+			/*
+			 * Handle sending operations.
+			 */
+			case MessageB.TYPE_UNKNOWN:
+
+				SendingMessage sm = getSendingById(msg.getId());
+
+				if (sm != null) {
+					/*
+					 * Send the remote the NEW message.
+					 */
+
+					sendBlock(new MessageB(sm.getId(), sm.getDataLength()));
+				} else {
+					/*
+					 * If there is no more message.
+					 * Send ERROR back.
+					 */
+					sendBlock(new MessageB(MessageB.TYPE_ERROR_SEND, msg.getId()));
+				}
+
+				break;
+
+			case MessageB.TYPE_COMPLETE:
+
+				/*
+				 * Message was successfully transmitted.
+				 * Remove it if it still exist.
+				 */
+
+				sm = getSendingById(msg.getId());
+
+				if (sm != null) {
+					sendingQueue.remove(sm);
+				}
+
+				break;
+
+			case MessageB.TYPE_WHATS_UP:
+
+				sm = getSendingById(msg.getId());
+
+				if (sm != null) {
+					/*
+					 * Send the remote the PENDING message.
+					 */
+
+					if (!sm.isDone()) {
+						sendBlock(new MessageB(MessageB.TYPE_PENDING, sm.getId()));
+					} else {
+						if (sm.wasSuccessful()) {
+							sendBlock(new MessageB(MessageB.TYPE_SENT, sm.getId()));
+						} else {
+							sendBlock(new MessageB(MessageB.TYPE_ERROR_SEND, sm.getId()));
+						}
+					}
+
+				} else {
+					/*
+					 * If there is no more message.
+					 * Send ERROR back.
+					 */
+
+					sendBlock(new MessageB(MessageB.TYPE_ERROR_SEND, msg.getId()));
+				}
+
+				break;
+
+			case MessageB.TYPE_ERROR_RECIEVE:
+
+				/*
+				 * Message transmitting failed.
+				 * Remove it if it still exist.
+				 */
+
+				sm = getSendingById(msg.getId());
+
+				if (sm != null) {
+					sendingQueue.remove(sm);
+				}
+
+				break;
+			}
+
+			break;
+
+		case NodeBlock.BLOCK_MESSAGE_BLOCK:
+			MessageBlock mBlock = (MessageBlock) nb;
+
+			if (receivingList.containsKey(mBlock.getId())) {
+
+				/*
+				 * Add block to message if message exist.
+				 */
+
+				MessageContainer mc = receivingList.get(mBlock.getId());
+
+				mc.putData(mBlock.getData(), mBlock.getOffset());
+
+				/*
+				 * Send feedback.
+				 */
+
+				sendBlock(new MessageBlockFeedback(MessageBlockFeedback.TYPE_ACKNOWLEDGE, mBlock.getId(),
+						mBlock.getOffset(), mBlock.getData().length));
+			} else {
+
+				/*
+				 * Add to fragment buffer.
+				 */
+				fragments.add(new MessageBlockFragment(mBlock.getId(), mBlock.getData(), mBlock.getOffset()));
+
+				/*
+				 * Send unknown message.
+				 */
+				sendBlock(new MessageB(MessageB.TYPE_UNKNOWN, mBlock.getId()));
+			}
+
+			break;
+
+		case NodeBlock.BLOCK_MESSAGE_BLOCK_FEEDBACK:
+			MessageBlockFeedback mbf = (MessageBlockFeedback) nb;
+
+			switch (mbf.getType()) {
+			case MessageBlockFeedback.TYPE_ACKNOWLEDGE:
+
+				/*
+				 * Save acknowledge.
+				 */
+				SendingMessage sm = getSendingById(mbf.getId());
+
+				if (sm != null)
+					sm.readBlockResponse(mbf.getOffset(), mbf.getLength());
+
+				break;
+
+			case MessageBlockFeedback.TYPE_REPEAT:
+
+				/*
+				 * Resent block if available.
+				 */
+
+				sm = getSendingById(mbf.getId());
+
+				if (sm != null)
+					;
+				//TODO: Repeat the block.
+
+				break;
+			}
 
 			break;
 		}
+	}
+
+	protected SendingMessage getSendingById(final long msgId) {
+		for (SendingMessage sm : sendingQueue) {
+			return sm;
+		}
+
+		return null;
 	}
 
 	/*
