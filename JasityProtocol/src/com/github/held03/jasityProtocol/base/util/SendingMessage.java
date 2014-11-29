@@ -26,15 +26,15 @@
 
 package com.github.held03.jasityProtocol.base.util;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.github.held03.jasityProtocol.base.util.blocks.MessageBlock;
 import com.github.held03.jasityProtocol.interfaces.Message;
 
 
@@ -95,7 +95,14 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 	 * Every time a block was sent it will be listed in that list, until it gets
 	 * confirmed by the remote.
 	 */
-	protected HashSet<MessageBlockDef> sentBlocks = new HashSet<SendingMessage.MessageBlockDef>();
+	protected Set<MessageBlockDef> sentBlocks = Collections
+			.synchronizedSet(new HashSet<SendingMessage.MessageBlockDef>());
+
+	/**
+	 * List of all blocks which should be resent.
+	 */
+	protected Set<MessageBlockDef> repeatBlocks = Collections
+			.synchronizedSet(new HashSet<SendingMessage.MessageBlockDef>());
 
 	/**
 	 * A abstract description of a block of data.
@@ -185,14 +192,27 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 	 * Gets next block to send of this message.
 	 * <p>
 	 * If the data reaches the end, <code>null</code> will be returned.
+	 * <p>
+	 * This method would also return <code>null</code> if all block sent, but
+	 * still not confirmed.
 	 * 
 	 * @param size size of block
 	 * @return the block data to send, or <code>null</code> if EOF
 	 */
-	public synchronized byte[] getNextBlock(final int size) {
+	public synchronized MessageBlock getNextBlock(final int size, final long time) {
 		int length = size - 16;
 		int offset = currentOffset;
 
+		/*
+		 * Search first for block to resent.
+		 */
+		MessageBlock mb = checkForMissingBlocks(size, time);
+		if (mb != null)
+			return mb;
+
+		/*
+		 * Then send the next block if available.
+		 */
 		if (currentOffset + length > binaryData.length) {
 			length = binaryData.length - currentOffset - 1;
 
@@ -219,21 +239,8 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 	 * @param length length of data
 	 * @return the coded block
 	 */
-	protected byte[] sendBlock(final int offset, final int length) {
-		ByteArrayOutputStream arout = new ByteArrayOutputStream(length + 16);
-
-		DataOutputStream out = new DataOutputStream(arout);
-
-		try {
-			out.writeLong(messageID);
-			out.writeInt(offset);
-			out.writeInt(length);
-			out.write(binaryData, offset, length);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return arout.toByteArray();
+	protected MessageBlock sendBlock(final int offset, final int length) {
+		return new MessageBlock(messageID, binaryData, offset, length);
 	}
 
 	/**
@@ -247,7 +254,22 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 	 * @param time the maximum time after a block must be answered.
 	 * @return
 	 */
-	public synchronized byte[] checkForMissingBlocks(final int size, final long time) {
+	public synchronized MessageBlock checkForMissingBlocks(final int size, final long time) {
+		for (MessageBlockDef mbd : repeatBlocks) {
+			if (size < mbd.length) {
+				repeatBlocks.remove(mbd);
+				sentBlocks.add(new MessageBlockDef(mbd.offset, size));
+				repeatBlocks.add(new MessageBlockDef(mbd.offset + size, mbd.length - size, mbd.timeSent));
+				return sendBlock(mbd.offset, size);
+
+			} else {
+				sentBlocks.add(new MessageBlockDef(mbd.offset, mbd.length));
+				repeatBlocks.remove(mbd);
+
+				return sendBlock(mbd.offset, mbd.length);
+			}
+		}
+
 		for (MessageBlockDef mbd : sentBlocks) {
 			if (mbd.timeSent + time < System.currentTimeMillis()) {
 				sentBlocks.remove(mbd);
@@ -284,7 +306,7 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 		}
 		sentBlocks.removeAll(rm);
 
-		if (sentBlocks.isEmpty() && currentOffset == binaryData.length) {
+		if (sentBlocks.isEmpty() && repeatBlocks.isEmpty() && currentOffset == binaryData.length) {
 			finished = true;
 
 			this.notifyAll();
@@ -298,7 +320,7 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 	 * @param length the length of the data
 	 * @return the block to send
 	 */
-	public synchronized byte[] resent(final int offset, final int length) {
+	public synchronized MessageBlock resent(final int offset, final int length) {
 		MessageBlockDef mbd = new MessageBlockDef(offset, length);
 		// removes old instance (all which are contained)
 		HashSet<MessageBlockDef> rm = new HashSet<MessageBlockDef>();
@@ -316,6 +338,10 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 
 	public boolean wasSuccessful() {
 		return (finished != null ? finished : false);
+	}
+
+	public synchronized void repeat(final int offset, final int length) {
+		repeatBlocks.add(new MessageBlockDef(offset, length));
 	}
 
 	/*

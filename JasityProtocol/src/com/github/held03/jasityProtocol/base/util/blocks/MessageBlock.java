@@ -27,6 +27,7 @@
 package com.github.held03.jasityProtocol.base.util.blocks;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 
 /**
@@ -53,6 +54,8 @@ import java.nio.ByteBuffer;
  */
 public class MessageBlock extends NodeBlock {
 
+	public static final int STATIC_COST = 17;
+
 	/**
 	 * The id of the message, this block relates to.
 	 */
@@ -76,7 +79,7 @@ public class MessageBlock extends NodeBlock {
 	}
 
 	/**
-	 * Create a type and id.
+	 * Create a new message block with given id, offset and data.
 	 * 
 	 * @param type the
 	 * @param id
@@ -85,6 +88,20 @@ public class MessageBlock extends NodeBlock {
 		this.id = id;
 		this.offset = offset;
 		this.data = data;
+
+	}
+
+	/**
+	 * Create a new message block with given id and extract the data from the
+	 * given array.
+	 * 
+	 * @param type the
+	 * @param id
+	 */
+	public MessageBlock(final long id, final byte[] data, final int offset, final int length) {
+		this.id = id;
+		this.offset = offset;
+		this.data = Arrays.copyOfRange(data, offset, offset + length);
 
 	}
 
@@ -176,7 +193,7 @@ public class MessageBlock extends NodeBlock {
 		 * - 4 bytes: lenght (int)
 		 * - length bytes: data (byte[])
 		 */
-		return 17 + data.length;
+		return STATIC_COST + data.length;
 
 	}
 

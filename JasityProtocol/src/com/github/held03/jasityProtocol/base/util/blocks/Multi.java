@@ -49,6 +49,9 @@ import java.nio.ByteBuffer;
  */
 public class Multi extends NodeBlock {
 
+	public static final int STATIC_COST = 5;
+	public static final int ADDITIONAL_COST = 4;
+
 	/**
 	 * The sub blocks contained by this block.
 	 */
@@ -127,7 +130,6 @@ public class Multi extends NodeBlock {
 		int len;
 		int limit = data.limit();
 		int nextPos;
-		ByteBuffer buf;
 
 		/*
 		 * Decode all entries.
@@ -163,10 +165,10 @@ public class Multi extends NodeBlock {
 		 * Own size 5 bytes plus 4 bytes for every entry
 		 * and finally the sum of the sizes of the entries.
 		 */
-		int size = 5;
+		int size = STATIC_COST; // 5
 
 		for (NodeBlock block : subBlocks) {
-			size += 4;
+			size += ADDITIONAL_COST; // 4
 			size += block.getSize();
 		}
 

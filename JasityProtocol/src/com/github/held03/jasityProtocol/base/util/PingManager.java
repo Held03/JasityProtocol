@@ -29,6 +29,8 @@ package com.github.held03.jasityProtocol.base.util;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -50,15 +52,17 @@ public class PingManager {
 	 */
 	protected int threshold = 5;
 
+	protected int failures = 0;
+
 	/**
 	 * List of sent but not answered pings.
 	 */
-	protected HashSet<DataSet> newPings = new HashSet<DataSet>();
+	protected Set<DataSet> newPings = Collections.synchronizedSet(new HashSet<DataSet>());
 
 	/**
 	 * List of sent and answered pings.
 	 */
-	protected ArrayList<DataSet> holdPings = new ArrayList<DataSet>();
+	protected List<DataSet> holdPings = Collections.synchronizedList(new ArrayList<DataSet>());
 
 	/**
 	 * Returns the average ping time in seconds.
@@ -118,9 +122,11 @@ public class PingManager {
 				ds.readPong();
 				rm.add(ds);
 				holdPings.add(ds);
+				failures = 0;
 
 			} else if (System.currentTimeMillis() - ds.timeStempSent > connectionTimeOut) {
 				rm.add(ds);
+				failures++;
 			}
 		}
 
@@ -129,7 +135,33 @@ public class PingManager {
 
 	}
 
+	/**
+	 * Checks if the remote sends no more pings back.
+	 * <p>
+	 * Note: This would return <code>false</code> if no ping was ever received,
+	 * even if the minMissingCount was exceeded, until the maxMissingCount was
+	 * reached.
+	 * <p>
+	 * Note: this can be used to determinate when a connection hangs up.
+	 * 
+	 * @param minMissingCount the minimum of unanswered pings to return
+	 *            <code>true</code>, if the last received answer is too long
+	 *            ago.
+	 * @param maxMissingCount the count of unanswered pings to return
+	 *            <code>true</code>, any way
+	 * @return <code>true</code> if no more pings were answered.
+	 */
+	public boolean checkPingsTimedOut(final int minMissingCount, final int maxMissingCount) {
+		if (failures >= maxMissingCount)
+			return true;
 
+		if (holdPings.size() == 0)
+			return false;
+
+		DataSet newest = holdPings.get(holdPings.size() - 1);
+
+		return (minMissingCount <= failures && (System.currentTimeMillis() - newest.timeStempSent) > connectionTimeOut);
+	}
 
 	/**
 	 * Creates a new empty ping manager.

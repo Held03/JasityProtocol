@@ -101,18 +101,23 @@ public interface Node {
 	 * also if one or more blocks get lost.
 	 * <p>
 	 * The blocks are at most as long like the connection block size is.
+	 * <p>
+	 * If the node was closed it returns <code>null</code>.
 	 * 
 	 * @return a raw data block to send
+	 * @throws InterruptedException
 	 * @see #getNextBlockDirectly()
 	 */
-	public byte[] getNextBlock();
+	public byte[] getNextBlock() throws InterruptedException;
 
 	/**
 	 * Returns immediately the next raw block to send.
 	 * <p>
 	 * This behaves similar to {@link #getNextBlock()}, but woun't block if no
-	 * block is currently available. If no block is ready, it will return
-	 * <code>null</code>.
+	 * block is currently available. If no block is ready, it will return a
+	 * empty array, means an array with the length 0.
+	 * <p>
+	 * If the node was closed it returns <code>null</code>.
 	 * 
 	 * @return a raw data block to send, or <code>null</code>
 	 * @see #getNextBlock()

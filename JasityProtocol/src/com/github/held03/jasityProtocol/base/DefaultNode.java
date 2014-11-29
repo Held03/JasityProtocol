@@ -28,11 +28,17 @@ package com.github.held03.jasityProtocol.base;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -89,6 +95,11 @@ public class DefaultNode implements Node {
 	public static final long CURRENT_VERSION = 0;
 
 	/**
+	 * Monitor to synchronize block requests.
+	 */
+	private Object monitor = new Object();
+
+	/**
 	 * The set of all registered connection listeners.
 	 * <p>
 	 * This field should be synchronized if accessed. Like:
@@ -121,6 +132,11 @@ public class DefaultNode implements Node {
 	}
 
 	/**
+	 * Time to wait for an answer in milliseconds.
+	 */
+	protected long timeOut = 3000; // 3s 
+
+	/**
 	 * The address of the remote node.
 	 */
 	protected final Address remoteAddress;
@@ -147,14 +163,6 @@ public class DefaultNode implements Node {
 	protected MessageCoder coder = new SerializerCoder(); // TODO use factory
 
 	/**
-	 * Connected flag.
-	 * <p>
-	 * It is <code>true</code> if the the connection to the remote node was
-	 * successfully established.
-	 */
-	protected boolean isOnline;
-
-	/**
 	 * The version of the remote
 	 */
 	protected long remoteVersionCode = -1;
@@ -167,12 +175,12 @@ public class DefaultNode implements Node {
 	/**
 	 * System node blocks to send.
 	 */
-	protected LinkedList<NodeBlock> blocks = new LinkedList<NodeBlock>();
+	protected List<NodeBlock> blocks = Collections.synchronizedList(new LinkedList<NodeBlock>());
 
 	/**
 	 * Set of received blocks without knowing the message of it.
 	 */
-	protected HashSet<MessageBlockFragment> fragments = new HashSet<MessageBlockFragment>();
+	protected Set<MessageBlockFragment> fragments = Collections.synchronizedSet(new HashSet<MessageBlockFragment>());
 
 	/**
 	 * Queue of messages waiting to send.
@@ -182,12 +190,23 @@ public class DefaultNode implements Node {
 	/**
 	 * List of currently receiving messages.
 	 */
-	protected HashMap<Long, MessageContainer> receivingList = new HashMap<Long, MessageContainer>();
+	protected Map<Long, MessageContainer> receivingList = Collections
+			.synchronizedMap(new HashMap<Long, MessageContainer>());
 
 	/**
 	 * The current state of the Node.
 	 */
 	protected State currentState = State.OPENING;
+
+	/**
+	 * Time between pings.
+	 */
+	protected long pingInterval = 5000; // 5s
+
+	/**
+	 * Timer to send new pings.
+	 */
+	protected Timer pingSender;
 
 	/**
 	 * Create a new Node.
@@ -198,6 +217,9 @@ public class DefaultNode implements Node {
 		this.localAddress = local;
 		this.remoteAddress = remote;
 		this.connection = connection;
+
+		this.pingSender = new Timer(true);
+		pingSender.schedule(new PingTimerTask(), 100, pingInterval);
 	}
 
 	/*
@@ -256,8 +278,12 @@ public class DefaultNode implements Node {
 				/*
 				 * Sets node to available
 				 */
-				if (currentState.equals(State.OPENING)) {
-					currentState = State.CONNECTED;
+				synchronized (monitor) {
+					if (currentState.equals(State.OPENING)) {
+						currentState = State.CONNECTED;
+
+						monitor.notify();
+					}
 				}
 
 				break;
@@ -269,7 +295,7 @@ public class DefaultNode implements Node {
 				 */
 			case Hello.TYPE_BYE:
 				/*
-				 * Remote closed node.
+				 * Remote node closed the .
 				 * Close node.
 				 */
 				close();
@@ -335,7 +361,7 @@ public class DefaultNode implements Node {
 							rm.add(mbf);
 
 							/*
-							 * Add insert data.
+							 * Insert data.
 							 */
 							mc.putData(mbf.data, mbf.offset);
 
@@ -451,7 +477,9 @@ public class DefaultNode implements Node {
 				sm = getSendingById(msg.getId());
 
 				if (sm != null) {
-					sendingQueue.remove(sm);
+					synchronized (sendingQueue) {
+						sendingQueue.remove(sm);
+					}
 				}
 
 				break;
@@ -496,7 +524,9 @@ public class DefaultNode implements Node {
 				sm = getSendingById(msg.getId());
 
 				if (sm != null) {
-					sendingQueue.remove(sm);
+					synchronized (sendingQueue) {
+						sendingQueue.remove(sm);
+					}
 				}
 
 				break;
@@ -549,8 +579,13 @@ public class DefaultNode implements Node {
 				 */
 				SendingMessage sm = getSendingById(mbf.getId());
 
-				if (sm != null)
+				if (sm != null) {
 					sm.readBlockResponse(mbf.getOffset(), mbf.getLength());
+
+					synchronized (monitor) {
+						monitor.notify();
+					}
+				}
 
 				break;
 
@@ -562,9 +597,13 @@ public class DefaultNode implements Node {
 
 				sm = getSendingById(mbf.getId());
 
-				if (sm != null)
-					;
-				//TODO: Repeat the block.
+				if (sm != null) {
+					sm.repeat(mbf.getOffset(), mbf.getLength());
+
+					synchronized (monitor) {
+						monitor.notify();
+					}
+				}
 
 				break;
 			}
@@ -574,8 +613,10 @@ public class DefaultNode implements Node {
 	}
 
 	protected SendingMessage getSendingById(final long msgId) {
-		for (SendingMessage sm : sendingQueue) {
-			return sm;
+		synchronized (sendingQueue) {
+			for (SendingMessage sm : sendingQueue) {
+				return sm;
+			}
 		}
 
 		return null;
@@ -586,9 +627,61 @@ public class DefaultNode implements Node {
 	 * @see com.github.held03.jasityProtocol.interfaces.Node#getNextBlock()
 	 */
 	@Override
-	public byte[] getNextBlock() {
-		// TODO Auto-generated method stub
-		return null;
+	public byte[] getNextBlock() throws InterruptedException {
+		synchronized (monitor) {
+			byte[] data = getNextBlockDirectly();
+
+			if (data == null)
+				return null;
+
+			if (data.length == 0) {
+				monitor.wait();
+
+				return getNextBlock();
+			}
+
+			return data;
+		}
+	}
+
+	protected int getBlocksSize(final List<NodeBlock> blocks) {
+
+		if (blocks.isEmpty()) {
+			return 0;
+
+		} else if (blocks.size() == 1) {
+			return blocks.get(0).getSize();
+
+		} else {
+			int size = Multi.STATIC_COST;
+
+			for (NodeBlock nb : blocks) {
+				size += Multi.ADDITIONAL_COST;
+				size += nb.getSize();
+			}
+
+			return size;
+		}
+	}
+
+	protected int getBlocksSize(final List<NodeBlock> blocks, final NodeBlock add) {
+
+		if (blocks.isEmpty()) {
+			return add.getSize();
+
+		} else {
+			int size = Multi.STATIC_COST;
+
+			for (NodeBlock nb : blocks) {
+				size += Multi.ADDITIONAL_COST;
+				size += nb.getSize();
+			}
+
+			size += Multi.ADDITIONAL_COST;
+			size += add.getSize();
+
+			return size;
+		}
 	}
 
 	/*
@@ -598,8 +691,70 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public byte[] getNextBlockDirectly() {
-		// TODO Auto-generated method stub
-		return null;
+		synchronized (monitor) {
+
+			LinkedList<NodeBlock> blocks = new LinkedList<NodeBlock>();
+
+			/*
+			 * Get current block size
+			 */
+			int size = connection.getBlockSize();
+
+			/*
+			 * Getting node blocks.
+			 */
+
+			NodeBlock nb2;
+
+			while ( ( (nb2 = blocks.peek())) != null && getBlocksSize(blocks, nb2) <= size) {
+				blocks.add(blocks.remove());
+			}
+
+			/*
+			 * Getting message blocks.
+			 */
+			if (!sendingQueue.isEmpty() && currentState.equals(State.CONNECTED)) {
+				synchronized (sendingQueue) {
+					Iterator<SendingMessage> msgs = sendingQueue.iterator();
+
+					SendingMessage msg = msgs.next();
+
+					int freeSpace;
+
+					while ( (freeSpace = size
+							- (getBlocksSize(blocks) + MessageBlock.STATIC_COST + Multi.ADDITIONAL_COST + (blocks
+									.size() == 1 ? Multi.STATIC_COST : 0))) > 0
+							&& msgs.hasNext()) {
+
+						MessageBlock mb = msg.getNextBlock(freeSpace, timeOut);
+
+						if (mb == null) {
+							if (msgs.hasNext())
+								msg = msgs.next();
+							else
+								break;
+						} else {
+							blocks.add(mb);
+						}
+					}
+				}
+			}
+
+			if (blocks.isEmpty() && currentState.equals(State.CLOSED)) {
+				return null;
+
+			} else if (blocks.isEmpty()) {
+				return new byte[0];
+
+			} else if (blocks.size() == 1) {
+				return blocks.getFirst().encode().array();
+
+			} else {
+				NodeBlock[] bls = blocks.toArray(new NodeBlock[0]);
+
+				return new Multi(bls).encode().array();
+			}
+		}
 	}
 
 	/**
@@ -618,10 +773,14 @@ public class DefaultNode implements Node {
 	 * @param first if <code>true</code>, add the block at head of the queue
 	 */
 	protected void sendBlock(final NodeBlock nb, final boolean first) {
-		if (first) {
-			blocks.addFirst(nb);
-		} else {
-			blocks.add(nb);
+		synchronized (monitor) {
+			if (first) {
+				blocks.add(0, nb);
+			} else {
+				blocks.add(nb);
+			}
+
+			monitor.notify();
 		}
 	}
 
@@ -645,9 +804,17 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public Future<Boolean> sendMessage(final Message msg, final Priority priority) {
-		SendingMessage sm = new SendingMessage(getNextId(), coder.encodeMessage(msg).array(), priority);
-		sendingQueue.add(sm);
-		return sm;
+		synchronized (monitor) {
+			SendingMessage sm = new SendingMessage(getNextId(), coder.encodeMessage(msg).array(), priority);
+
+			synchronized (sendingQueue) {
+				sendingQueue.add(sm);
+			}
+
+			monitor.notify();
+
+			return sm;
+		}
 	}
 
 	/*
@@ -656,7 +823,15 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public void close() {
-		connection.close();
+		sendBlock(new Hello(Hello.TYPE_BYE, CURRENT_VERSION), true);
+
+		pingSender.cancel();
+
+		synchronized (monitor) {
+			currentState = State.CLOSED;
+
+			monitor.notify();
+		}
 	}
 
 	/*
@@ -665,7 +840,7 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public boolean isConnected() {
-		return connection.isConnected() && isOnline;
+		return connection.isConnected() && currentState.equals(State.CONNECTED);
 	}
 
 	/*
@@ -852,6 +1027,25 @@ public class DefaultNode implements Node {
 	@Override
 	public State getState() {
 		return currentState;
+	}
+
+	class PingTimerTask extends TimerTask {
+
+		/*
+		 * (non-Javadoc)
+		 * @see java.util.TimerTask#run()
+		 */
+		@Override
+		public void run() {
+			long id = getNextId();
+			sendBlock(new Ping(Ping.TYPE_PING, id), true);
+			pingManager.addPing(id);
+
+			if (pingManager.checkPingsTimedOut(5, (int) (60000 / pingInterval))) {
+				close();
+			}
+		}
+
 	}
 
 }
