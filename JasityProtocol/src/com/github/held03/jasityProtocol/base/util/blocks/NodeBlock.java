@@ -41,6 +41,15 @@ import com.github.held03.jasityProtocol.interfaces.Node;
 public abstract class NodeBlock {
 
 	/**
+	 * The minimum size a block must have to code any block.
+	 * <p>
+	 * This can be assumed a the minimum size available to code data into an
+	 * block. If any component advice a smaller block size this size can be used
+	 * as minimum.
+	 */
+	public static final int MIN_BLOCK_SIZE = 32;
+
+	/**
 	 * A block containing other blocks.
 	 * 
 	 * <pre>

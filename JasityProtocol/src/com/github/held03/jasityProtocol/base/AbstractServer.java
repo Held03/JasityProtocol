@@ -28,9 +28,11 @@ package com.github.held03.jasityProtocol.base;
 
 import java.util.HashSet;
 
-import com.github.held03.jasityProtocol.interfaces.ConnectionManager;
+import com.github.held03.jasityProtocol.interfaces.Address;
 import com.github.held03.jasityProtocol.interfaces.Message;
-import com.github.held03.jasityProtocol.interfaces.NodeConnection;
+import com.github.held03.jasityProtocol.interfaces.Message.Priority;
+import com.github.held03.jasityProtocol.interfaces.Node;
+import com.github.held03.jasityProtocol.interfaces.NodeClosedException;
 import com.github.held03.jasityProtocol.interfaces.Server;
 import com.github.held03.jasityProtocol.interfaces.ServerListener;
 
@@ -48,66 +50,145 @@ import com.github.held03.jasityProtocol.interfaces.ServerListener;
  * 
  * @author held03
  */
-public abstract class AbstractServer implements Server, ConnectionManager {
+public abstract class AbstractServer extends AbstractConnection implements Server {
 
 	/**
-	 * All registered ServerListeners.
-	 * <p>
-	 * This field should be synchronized if accessed. Like:
-	 * 
-	 * <pre>
-	 * synchronized (listeners) {
-	 * 	// access or edit list ...
-	 * }
-	 * </pre>
+	 * Set of all server listeners.
 	 */
-	protected HashSet<ServerListener> listeners = new HashSet<>();
+	protected HashSet<ServerListener> listeners = new HashSet<ServerListener>();
 
 	/**
-	 * Empty constructor.
+	 * Normal constructor.
 	 */
-	public AbstractServer() {
+	public AbstractServer(final Address localAddress) {
+		super(localAddress);
 
 	}
 
-	@Override
-	public boolean checkMessage(final Message msg, final NodeConnection con) {
-		boolean accepted = true;
+	/**
+	 * Normal constructor.
+	 */
+	public AbstractServer(final Address localAddress, final boolean closeIfEmpty) {
+		super(localAddress, closeIfEmpty);
 
-		// lets check the message by all listeners
-		for (ServerListener listener : listeners) {
-			// if returned false, set return to false
-			if (!listener.newMessage(msg, con)) {
-				accepted = false;
+	}
+
+	/**
+	 * Normal constructor.
+	 */
+	public AbstractServer(final Address localAddress, final Node n) {
+		super(localAddress, n);
+
+	}
+
+	/**
+	 * Normal constructor.
+	 */
+	public AbstractServer(final Address localAddress, final Node n, final boolean closeIfEmpty) {
+		super(localAddress, n, closeIfEmpty);
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.github.held03.jasityProtocol.interfaces.Server#close()
+	 */
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.github.held03.jasityProtocol.interfaces.Server#broadcast(com.github
+	 * .held03.jasityProtocol.interfaces.Message)
+	 */
+	@Override
+	public void broadcast(final Message msg) {
+		broadcast(msg, Priority.NORMAL);
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.github.held03.jasityProtocol.interfaces.Server#broadcast(com.github
+	 * .held03.jasityProtocol.interfaces.Message,
+	 * com.github.held03.jasityProtocol.interfaces.Message.Priority)
+	 */
+	@Override
+	public void broadcast(final Message msg, final Priority priority) {
+		synchronized (nodes) {
+			for (Node n : nodes.values()) {
+				try {
+					n.sendMessage(msg, priority);
+				} catch (NodeClosedException e) {
+					// will be handled if try to read from node
+				}
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.github.held03.jasityProtocol.interfaces.Server#addListener(com.github
+	 * .held03.jasityProtocol.interfaces.ServerListener)
+	 */
+	@Override
+	public void addListener(final ServerListener listener) {
+		listeners.add(listener);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * com.github.held03.jasityProtocol.interfaces.Server#removeListener(com
+	 * .github.held03.jasityProtocol.interfaces.ServerListener)
+	 */
+	@Override
+	public void removeListener(final ServerListener listener) {
+		listeners.remove(listener);
+	}
+
+	@Override
+	public boolean addNode(final Node n) {
+
+		boolean accept = true;
+
+		/*
+		 * Accepts only if all listeners return true.
+		 */
+		for (ServerListener sl : listeners) {
+			accept &= (sl.newNode(n));
+		}
+
+		/*
+		 * Add if it was accepted.
+		 */
+		if (accept) {
+			return super.addNode(n);
+		} else {
+			n.close();
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean rmNode(final Node n) {
+
+		boolean wasRm = super.rmNode(n);
+
+		if (wasRm) {
+			for (ServerListener sl : listeners) {
+				sl.nodeLost(n);
 			}
 		}
 
-		return accepted;
-	}
-
-	@Override
-	public void broadcast(final Message msg) {
-		// if the transport layer supports a better method like a native
-		// broadcast override this method and use it.
-
-		// forward message to all nodes.
-		for (NodeConnection nc : getNodes()) {
-			nc.send(msg);
-		}
-	}
-
-	@Override
-	public void addListener(final ServerListener listener) {
-		synchronized (listeners) {
-			listeners.add(listener);
-		}
-	}
-
-	@Override
-	public void removeListener(final ServerListener listener) {
-		synchronized (listeners) {
-			listeners.remove(listener);
-		}
+		return wasRm;
 	}
 
 

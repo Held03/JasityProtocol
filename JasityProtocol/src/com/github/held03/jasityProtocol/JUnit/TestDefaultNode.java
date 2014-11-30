@@ -28,8 +28,10 @@ package com.github.held03.jasityProtocol.JUnit;
 
 import static org.junit.Assert.fail;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
@@ -38,6 +40,7 @@ import org.junit.Test;
 import com.github.held03.jasityProtocol.base.DefaultNode;
 import com.github.held03.jasityProtocol.base.util.StringMessage;
 import com.github.held03.jasityProtocol.base.util.blocks.NodeBlock;
+import com.github.held03.jasityProtocol.interfaces.Address;
 import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Node;
@@ -79,10 +82,10 @@ public class TestDefaultNode {
 	 * 
 	 * @throws NodeClosedException
 	 */
-	@Test(timeout = 10000)
+	@Test(timeout = 20000)
 	public void testGetNextBlock() throws NodeClosedException {
 
-		final List<Node> firstList = new LinkedList<Node>();
+		final Set<Node> firstList = new HashSet<Node>();
 
 		Connection cFirst = new Connection() {
 
@@ -92,7 +95,7 @@ public class TestDefaultNode {
 			}
 
 			@Override
-			public List<Node> getRelatedNodes() {
+			public Set<Node> getRelatedNodes() {
 				return firstList;
 			}
 
@@ -108,20 +111,25 @@ public class TestDefaultNode {
 
 			@Override
 			public int getBlockSize() {
-				return 32;
+				return 40;
 			}
 
 			@Override
 			public void close() {
 
 			}
+
+			@Override
+			public Address getLocalAddress() {
+				return null;
+			}
 		};
 
-		DefaultNode first = new DefaultNode(null, null, cFirst);
+		DefaultNode first = new DefaultNode(null, cFirst);
 
 		firstList.add(first);
 
-		final List<Node> secondList = new LinkedList<Node>();
+		final Set<Node> secondList = new HashSet<Node>();
 
 		Connection cSecond = new Connection() {
 
@@ -131,7 +139,7 @@ public class TestDefaultNode {
 			}
 
 			@Override
-			public List<Node> getRelatedNodes() {
+			public Set<Node> getRelatedNodes() {
 				return secondList;
 			}
 
@@ -147,16 +155,21 @@ public class TestDefaultNode {
 
 			@Override
 			public int getBlockSize() {
-				return 32;
+				return 40;
 			}
 
 			@Override
 			public void close() {
 
 			}
+
+			@Override
+			public Address getLocalAddress() {
+				return null;
+			}
 		};
 
-		DefaultNode second = new DefaultNode(null, null, cSecond);
+		DefaultNode second = new DefaultNode(null, cSecond);
 
 		secondList.add(first);
 
@@ -186,7 +199,7 @@ public class TestDefaultNode {
 
 		start.add(new StringMessage("Next Stäp. ☯☿♜♬♮⚊⚂♦♖"));
 		start.add(new StringMessage("Hello World."));
-		start.add(new StringMessage("Next Stäp. ☯☿♜♮⚊⚂ ♦♖"));
+		start.add(new StringMessage("Next Step. ☯☿♜♮⚊⚂ ♦♖"));
 
 		for (StringMessage sm : start)
 			first.sendMessage(sm);
@@ -197,8 +210,8 @@ public class TestDefaultNode {
 		boolean lastA = false;
 		boolean lastNote = false;
 
-		while ( (bufA = first.getNextBlockDirectly()) != null | (bufB = second.getNextBlockDirectly()) != null
-				| noCount++ < 5) {
+		while ( (bufA = first.getNextBlockDirectly(cFirst.getBlockSize())) != null
+				| (bufB = second.getNextBlockDirectly(cSecond.getBlockSize())) != null | noCount++ < 5) {
 			if (bufA != null && bufA.length != 0) {
 				System.out.println("Send Block A. len=" + bufA.length + "  " + NodeBlock.decodeBlock(bufA).toString());
 				second.receivedBlock(bufA);

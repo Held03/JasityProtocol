@@ -26,7 +26,7 @@
 
 package com.github.held03.jasityProtocol.interfaces;
 
-import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -90,7 +90,7 @@ public interface Connection {
 	 * 
 	 * @return list of nodes which communicates over this node
 	 */
-	public List<Node> getRelatedNodes();
+	public Set<Node> getRelatedNodes();
 
 	/**
 	 * Returns the maximum size of a sending block.
@@ -107,4 +107,12 @@ public interface Connection {
 	 * @return the size of blocks
 	 */
 	public int getBlockSize();
+
+	/**
+	 * Gets the address of this connection locally.
+	 * <p>
+	 * 
+	 * @return the address of this connection
+	 */
+	public Address getLocalAddress();
 }

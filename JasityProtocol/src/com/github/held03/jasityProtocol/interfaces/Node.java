@@ -124,7 +124,7 @@ public interface Node {
 	 * @throws NodeClosedException if the node was closed
 	 * @see #getNextBlock()
 	 */
-	public byte[] getNextBlockDirectly() throws NodeClosedException;
+	public byte[] getNextBlockDirectly(int blocksize) throws NodeClosedException;
 
 	/**
 	 * Gets the calculated ping time in seconds.

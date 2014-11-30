@@ -28,6 +28,8 @@ package com.github.held03.jasityProtocol.interfaces;
 
 import java.util.Set;
 
+import com.github.held03.jasityProtocol.interfaces.Message.Priority;
+
 
 /**
  * Manage the general connections and organization of the connections to the
@@ -44,9 +46,9 @@ public interface Server {
 	 * <p>
 	 * Notice that this will only work on a new server instance. If it was
 	 * already stated, this method will fail, also if it was stopped with
-	 * {@link #stopConnection()}.
+	 * {@link #close()}.
 	 */
-	public void startConnection();
+	public void open();
 
 	/**
 	 * Stops the server.
@@ -54,7 +56,7 @@ public interface Server {
 	 * This will break all connections to the server, all related threads are
 	 * interrupted.
 	 */
-	public void stopConnection();
+	public void close();
 
 	/**
 	 * Broadcasts a message to all nodes created by this server.
@@ -62,11 +64,16 @@ public interface Server {
 	public void broadcast(Message msg);
 
 	/**
+	 * Broadcasts a message to all nodes created by this server.
+	 */
+	public void broadcast(Message msg, Priority priority);
+
+	/**
 	 * Gets all node created from this server.
 	 * 
 	 * @return a list of all connection nodes
 	 */
-	public Set<Node> getNodes();
+	public Set<Node> getRelatedNodes();
 
 	/**
 	 * Adds a listener for this server.

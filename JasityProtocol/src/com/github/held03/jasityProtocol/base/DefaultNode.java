@@ -59,10 +59,10 @@ import com.github.held03.jasityProtocol.interfaces.Address;
 import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
-import com.github.held03.jasityProtocol.interfaces.NodeClosedException;
 import com.github.held03.jasityProtocol.interfaces.Message.Priority;
 import com.github.held03.jasityProtocol.interfaces.MessageCoder;
 import com.github.held03.jasityProtocol.interfaces.Node;
+import com.github.held03.jasityProtocol.interfaces.NodeClosedException;
 
 
 /**
@@ -143,11 +143,6 @@ public class DefaultNode implements Node {
 	protected final Address remoteAddress;
 
 	/**
-	 * The address of the local node.
-	 */
-	protected final Address localAddress;
-
-	/**
 	 * The connection to the Internet.
 	 * <p>
 	 * This is the access point, which the node uses to communicate with its
@@ -214,8 +209,7 @@ public class DefaultNode implements Node {
 	 * 
 	 * @param address the address the node is connected to
 	 */
-	public DefaultNode(final Address local, final Address remote, final Connection connection) {
-		this.localAddress = local;
+	public DefaultNode(final Address remote, final Connection connection) {
 		this.remoteAddress = remote;
 		this.connection = connection;
 
@@ -643,7 +637,7 @@ public class DefaultNode implements Node {
 	public byte[] getNextBlock() throws InterruptedException, NodeClosedException {
 		synchronized (monitor) {
 			while (!Thread.interrupted()) {
-				byte[] data = getNextBlockDirectly();
+				byte[] data = getNextBlockDirectly(connection.getBlockSize());
 
 				if (data != null && data.length > 0) {
 					monitor.wait();
@@ -702,7 +696,7 @@ public class DefaultNode implements Node {
 	 * com.github.held03.jasityProtocol.interfaces.Node#getNextBlockDirectly()
 	 */
 	@Override
-	public byte[] getNextBlockDirectly() throws NodeClosedException {
+	public byte[] getNextBlockDirectly(int blocksize) throws NodeClosedException {
 		synchronized (monitor) {
 
 //			System.out
@@ -710,12 +704,14 @@ public class DefaultNode implements Node {
 
 			LinkedList<NodeBlock> blocks = new LinkedList<NodeBlock>();
 
-			/*
-			 * Get current block size
-			 */
-			int size = connection.getBlockSize();
-
 			//System.out.println("max Size: " + size);
+
+			/*
+			 * Checking block size.
+			 * Reset it if it is too small.
+			 */
+			if (blocksize < NodeBlock.MIN_BLOCK_SIZE)
+				blocksize = NodeBlock.MIN_BLOCK_SIZE;
 
 			/*
 			 * Getting node blocks.
@@ -724,7 +720,7 @@ public class DefaultNode implements Node {
 
 			//System.out.println("blocks: " + blocks.size());
 			while ( (!this.blocks.isEmpty()) && ( (nb2 = this.blocks.get(0))) != null
-					&& getBlocksSize(blocks, nb2) <= size) {
+					&& getBlocksSize(blocks, nb2) <= blocksize) {
 				blocks.add(this.blocks.remove(0));
 			}
 
@@ -739,7 +735,7 @@ public class DefaultNode implements Node {
 
 					int freeSpace;
 
-					while ( (freeSpace = size
+					while ( (freeSpace = blocksize
 							- (getBlocksSize(blocks) + MessageBlock.STATIC_COST
 									+ (blocks.size() >= 1 ? Multi.ADDITIONAL_COST : 0) + (blocks.size() == 1 ? Multi.STATIC_COST
 									+ Multi.ADDITIONAL_COST
@@ -897,7 +893,7 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public Address getLocalAddress() {
-		return localAddress;
+		return connection.getLocalAddress();
 	}
 
 	/*
