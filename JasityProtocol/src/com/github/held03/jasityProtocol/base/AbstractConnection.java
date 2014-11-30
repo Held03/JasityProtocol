@@ -327,6 +327,15 @@ public abstract class AbstractConnection implements Connection {
 		return block;
 	}
 
+	public byte[] getNextBlock(final Address address) throws InterruptedException, NodeClosedException {
+
+		if (nodes.containsKey(address)) {
+			return nodes.get(address).getNextBlock();
+		}
+
+		return null;
+	}
+
 	/**
 	 * A block of data to send to a target.
 	 * 
