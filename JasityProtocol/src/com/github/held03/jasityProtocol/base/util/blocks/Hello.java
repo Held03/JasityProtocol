@@ -210,4 +210,26 @@ public class Hello extends NodeBlock {
 		return BLOCK_HELLO;
 	}
 
+	@Override
+	public String toString() {
+		String typ = "Illegal";
+
+		switch (type) {
+		case TYPE_HELLO:
+			typ = "Hello";
+			break;
+		case TYPE_KNOCK:
+			typ = "Knock";
+			break;
+		case TYPE_BUSY:
+			typ = "Busy";
+			break;
+		case TYPE_BYE:
+			typ = "Bye";
+			break;
+		}
+
+		return "Hello(" + typ + ", " + version + ")";
+	}
+
 }

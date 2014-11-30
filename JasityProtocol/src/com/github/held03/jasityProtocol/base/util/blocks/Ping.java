@@ -192,4 +192,20 @@ public class Ping extends NodeBlock {
 		return BLOCK_PING;
 	}
 
+	@Override
+	public String toString() {
+		String typ = "Illegal";
+
+		switch (type) {
+		case TYPE_PING:
+			typ = "Ping";
+			break;
+		case TYPE_PONG:
+			typ = "Pong";
+			break;
+		}
+
+		return "Ping(" + typ + ", " + id + ")";
+	}
+
 }

@@ -106,9 +106,10 @@ public interface Node {
 	 * 
 	 * @return a raw data block to send
 	 * @throws InterruptedException
+	 * @throws NodeClosedException if the node was closed
 	 * @see #getNextBlockDirectly()
 	 */
-	public byte[] getNextBlock() throws InterruptedException;
+	public byte[] getNextBlock() throws InterruptedException, NodeClosedException;
 
 	/**
 	 * Returns immediately the next raw block to send.
@@ -120,9 +121,10 @@ public interface Node {
 	 * If the node was closed it returns <code>null</code>.
 	 * 
 	 * @return a raw data block to send, or <code>null</code>
+	 * @throws NodeClosedException if the node was closed
 	 * @see #getNextBlock()
 	 */
-	public byte[] getNextBlockDirectly();
+	public byte[] getNextBlockDirectly() throws NodeClosedException;
 
 	/**
 	 * Gets the calculated ping time in seconds.
@@ -158,8 +160,9 @@ public interface Node {
 	 * 
 	 * @param msg the message to send
 	 * @return a future to track the message
+	 * @throws NodeClosedException if the node was closed
 	 */
-	public Future<Boolean> sendMessage(Message msg);
+	public Future<Boolean> sendMessage(Message msg) throws NodeClosedException;
 
 	/**
 	 * Send a message to the remote node.
@@ -170,8 +173,9 @@ public interface Node {
 	 * @param msg the message to send
 	 * @param priority the priority for the message
 	 * @return a tracking object
+	 * @throws NodeClosedException if the node was closed
 	 */
-	public Future<Boolean> sendMessage(Message msg, Message.Priority priority);
+	public Future<Boolean> sendMessage(Message msg, Message.Priority priority) throws NodeClosedException;
 
 	/**
 	 * Closes the connection to the remote node and interrupts the connection.

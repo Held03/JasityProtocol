@@ -27,6 +27,7 @@
 package com.github.held03.jasityProtocol.base.util.blocks;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 
 /**
@@ -186,4 +187,8 @@ public class Multi extends NodeBlock {
 		return BLOCK_MULTIBLOCK;
 	}
 
+	@Override
+	public String toString() {
+		return "Multi(" + Arrays.deepToString(subBlocks) + ")";
+	}
 }

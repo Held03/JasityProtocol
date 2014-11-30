@@ -80,6 +80,8 @@ import java.nio.ByteBuffer;
  */
 public class MessageB extends NodeBlock {
 
+	public static final int STATIC_COST = 14;
+
 	/**
 	 * Illegal block type.
 	 */
@@ -249,13 +251,13 @@ public class MessageB extends NodeBlock {
 	@Override
 	public int getSize() {
 		/*
-		 * Takes always 18 bytes:
+		 * Takes always 14 bytes:
 		 * - 1 byte: native type (byte)
 		 * - 1 byte: type (byte)
 		 * - 8 bytes: id (long)
-		 * - 8 bytes: id (long)
+		 * - 4 bytes: size (long)
 		 */
-		return 18;
+		return STATIC_COST; // 14
 
 	}
 
@@ -268,6 +270,40 @@ public class MessageB extends NodeBlock {
 	@Override
 	public byte getNativeType() {
 		return BLOCK_MESSAGE;
+	}
+
+	@Override
+	public String toString() {
+		String typ = "Illegal";
+
+		switch (type) {
+		case TYPE_COMPLETE:
+			typ = "Complete";
+			break;
+		case TYPE_ERROR_RECIEVE:
+			typ = "ErrorRec";
+			break;
+		case TYPE_ERROR_SEND:
+			typ = "ErrorSend";
+			break;
+		case TYPE_NEW:
+			typ = "New";
+			break;
+		case TYPE_PENDING:
+			typ = "Pending";
+			break;
+		case TYPE_SENT:
+			typ = "Sent";
+			break;
+		case TYPE_UNKNOWN:
+			typ = "Unknown";
+			break;
+		case TYPE_WHATS_UP:
+			typ = "WhatsUp";
+			break;
+		}
+
+		return "MessageB(" + typ + ", " + id + ", " + size + ")";
 	}
 
 }

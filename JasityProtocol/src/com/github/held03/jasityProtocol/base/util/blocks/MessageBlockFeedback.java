@@ -236,4 +236,20 @@ public class MessageBlockFeedback extends NodeBlock {
 		return BLOCK_MESSAGE_BLOCK_FEEDBACK;
 	}
 
+	@Override
+	public String toString() {
+		String typ = "Illegal";
+
+		switch (type) {
+		case TYPE_ACKNOWLEDGE:
+			typ = "Acknowledge";
+			break;
+		case TYPE_REPEAT:
+			typ = "Repeat";
+			break;
+		}
+
+		return "MessageBlockFeed(" + typ + ", " + id + ", " + offset + ", " + length + ")";
+	}
+
 }

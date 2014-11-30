@@ -165,4 +165,9 @@ public class Ignore extends NodeBlock {
 		return BLOCK_IGNORE;
 	}
 
+	@Override
+	public String toString() {
+		return "Ignore(" + data.length + ")";
+	}
+
 }

@@ -200,7 +200,7 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 	 * @return the block data to send, or <code>null</code> if EOF
 	 */
 	public synchronized MessageBlock getNextBlock(final int size, final long time) {
-		int length = size - 16;
+		int length = size;
 		int offset = currentOffset;
 
 		/*
@@ -214,7 +214,7 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 		 * Then send the next block if available.
 		 */
 		if (currentOffset + length > binaryData.length) {
-			length = binaryData.length - currentOffset - 1;
+			length = binaryData.length - currentOffset;
 
 			if (length <= 0)
 				return null;
@@ -434,6 +434,21 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 		} else {
 			return prioSort;
 		}
+	}
+
+	public int currentOffset() {
+		return currentOffset;
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (o instanceof SendingMessage) {
+			SendingMessage sm = (SendingMessage) o;
+
+			return (sm.messageID == messageID);
+		}
+
+		return false;
 	}
 
 }

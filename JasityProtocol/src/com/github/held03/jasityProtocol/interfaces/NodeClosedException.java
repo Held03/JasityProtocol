@@ -26,25 +26,59 @@
 
 package com.github.held03.jasityProtocol.interfaces;
 
-import java.nio.ByteBuffer;
-
 
 /**
- * Enables the managed connection to code and decode a message.
- * <p>
- * This interface declares a message coder/decoder, which can code a
- * {@link Message} into a {@link ByteBuffer} and such a {@link ByteBuffer} back
- * into a {@link Message}.
- * <p>
- * Every MessageCode has to handle {@link BinaryMessage}s. It is necessary to
- * add to such a message a identity to distinguish which message it codes to
- * decode it properly.
- * 
  * @author held03
  */
-public interface MessageCoder {
+public class NodeClosedException extends Exception {
 
-	public ByteBuffer encodeMessage(Message msg);
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7756345562666184355L;
 
-	public Message decodeMessage(ByteBuffer buffer);
+	/**
+	 * 
+	 */
+	public NodeClosedException() {
+
+	}
+
+	/**
+	 * @param message
+	 */
+	public NodeClosedException(final String message) {
+		super(message);
+
+	}
+
+	/**
+	 * @param cause
+	 */
+	public NodeClosedException(final Throwable cause) {
+		super(cause);
+
+	}
+
+	/**
+	 * @param message
+	 * @param cause
+	 */
+	public NodeClosedException(final String message, final Throwable cause) {
+		super(message, cause);
+
+	}
+
+	/**
+	 * @param message
+	 * @param cause
+	 * @param enableSuppression
+	 * @param writableStackTrace
+	 */
+	public NodeClosedException(final String message, final Throwable cause, final boolean enableSuppression,
+			final boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
+
+	}
+
 }

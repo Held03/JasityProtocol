@@ -208,4 +208,9 @@ public class MessageBlock extends NodeBlock {
 		return BLOCK_MESSAGE_BLOCK;
 	}
 
+	@Override
+	public String toString() {
+		return "MessageBlock(" + id + ", " + offset + ", " + data.length + ")";
+	}
+
 }

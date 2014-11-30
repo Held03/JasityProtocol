@@ -59,6 +59,7 @@ import com.github.held03.jasityProtocol.interfaces.Address;
 import com.github.held03.jasityProtocol.interfaces.Connection;
 import com.github.held03.jasityProtocol.interfaces.JPListener;
 import com.github.held03.jasityProtocol.interfaces.Message;
+import com.github.held03.jasityProtocol.interfaces.NodeClosedException;
 import com.github.held03.jasityProtocol.interfaces.Message.Priority;
 import com.github.held03.jasityProtocol.interfaces.MessageCoder;
 import com.github.held03.jasityProtocol.interfaces.Node;
@@ -220,6 +221,8 @@ public class DefaultNode implements Node {
 
 		this.pingSender = new Timer(true);
 		pingSender.schedule(new PingTimerTask(), 100, pingInterval);
+
+		sendBlock(new Hello(Hello.TYPE_KNOCK, CURRENT_VERSION));
 	}
 
 	/*
@@ -268,9 +271,11 @@ public class DefaultNode implements Node {
 			switch (hello.getType()) {
 			case Hello.TYPE_KNOCK:
 				/*
-				 * Answer with akc.
+				 * Answer with ack.
 				 */
 				sendBlock(new Hello(Hello.TYPE_HELLO, CURRENT_VERSION));
+
+				remoteVersionCode = hello.getVersion();
 
 				break;
 
@@ -278,6 +283,8 @@ public class DefaultNode implements Node {
 				/*
 				 * Sets node to available
 				 */
+				remoteVersionCode = hello.getVersion();
+
 				synchronized (monitor) {
 					if (currentState.equals(State.OPENING)) {
 						currentState = State.CONNECTED;
@@ -311,10 +318,11 @@ public class DefaultNode implements Node {
 			switch (ping.getType()) {
 			case Ping.TYPE_PING:
 				/*
-				 * Answer the ping directly.
-				 * The ping has a priority.
+				 * Answer the ping directly unless the node was closed.
+				 * The ping has a high priority.
 				 */
-				sendBlock(new Ping(Ping.TYPE_PONG, ping.getId()), true);
+				if (!currentState.equals(State.CLOSED))
+					sendBlock(new Ping(Ping.TYPE_PONG, ping.getId()), true);
 
 				break;
 
@@ -582,6 +590,10 @@ public class DefaultNode implements Node {
 				if (sm != null) {
 					sm.readBlockResponse(mbf.getOffset(), mbf.getLength());
 
+					if (sm.wasSuccessful()) {
+						sendBlock(new MessageB(MessageB.TYPE_SENT, sm.getId()));
+					}
+
 					synchronized (monitor) {
 						monitor.notify();
 					}
@@ -615,7 +627,8 @@ public class DefaultNode implements Node {
 	protected SendingMessage getSendingById(final long msgId) {
 		synchronized (sendingQueue) {
 			for (SendingMessage sm : sendingQueue) {
-				return sm;
+				if (sm.getId() == msgId)
+					return sm;
 			}
 		}
 
@@ -627,21 +640,20 @@ public class DefaultNode implements Node {
 	 * @see com.github.held03.jasityProtocol.interfaces.Node#getNextBlock()
 	 */
 	@Override
-	public byte[] getNextBlock() throws InterruptedException {
+	public byte[] getNextBlock() throws InterruptedException, NodeClosedException {
 		synchronized (monitor) {
-			byte[] data = getNextBlockDirectly();
+			while (!Thread.interrupted()) {
+				byte[] data = getNextBlockDirectly();
 
-			if (data == null)
-				return null;
+				if (data != null && data.length > 0) {
+					monitor.wait();
 
-			if (data.length == 0) {
-				monitor.wait();
-
-				return getNextBlock();
+					return data;
+				}
 			}
-
-			return data;
 		}
+
+		throw new InterruptedException();
 	}
 
 	protected int getBlocksSize(final List<NodeBlock> blocks) {
@@ -690,8 +702,11 @@ public class DefaultNode implements Node {
 	 * com.github.held03.jasityProtocol.interfaces.Node#getNextBlockDirectly()
 	 */
 	@Override
-	public byte[] getNextBlockDirectly() {
+	public byte[] getNextBlockDirectly() throws NodeClosedException {
 		synchronized (monitor) {
+
+//			System.out
+//					.println("Blocks: " + blocks.size() + " Msg: " + sendingQueue.size() + "/" + receivingList.size());
 
 			LinkedList<NodeBlock> blocks = new LinkedList<NodeBlock>();
 
@@ -700,14 +715,17 @@ public class DefaultNode implements Node {
 			 */
 			int size = connection.getBlockSize();
 
+			//System.out.println("max Size: " + size);
+
 			/*
 			 * Getting node blocks.
 			 */
-
 			NodeBlock nb2;
 
-			while ( ( (nb2 = blocks.peek())) != null && getBlocksSize(blocks, nb2) <= size) {
-				blocks.add(blocks.remove());
+			//System.out.println("blocks: " + blocks.size());
+			while ( (!this.blocks.isEmpty()) && ( (nb2 = this.blocks.get(0))) != null
+					&& getBlocksSize(blocks, nb2) <= size) {
+				blocks.add(this.blocks.remove(0));
 			}
 
 			/*
@@ -722,16 +740,40 @@ public class DefaultNode implements Node {
 					int freeSpace;
 
 					while ( (freeSpace = size
-							- (getBlocksSize(blocks) + MessageBlock.STATIC_COST + Multi.ADDITIONAL_COST + (blocks
-									.size() == 1 ? Multi.STATIC_COST : 0))) > 0
-							&& msgs.hasNext()) {
+							- (getBlocksSize(blocks) + MessageBlock.STATIC_COST
+									+ (blocks.size() >= 1 ? Multi.ADDITIONAL_COST : 0) + (blocks.size() == 1 ? Multi.STATIC_COST
+									+ Multi.ADDITIONAL_COST
+										: 0))) > 0) {
+
+						if (msg.currentOffset() == 0) {
+							if (freeSpace > MessageB.STATIC_COST + Multi.ADDITIONAL_COST
+									+ (blocks.size() == 0 ? Multi.STATIC_COST : 0)) {
+								freeSpace -= MessageB.STATIC_COST + Multi.ADDITIONAL_COST;
+
+								blocks.add(new MessageB(msg.getId(), msg.getDataLength()));
+
+								if (blocks.size() == 1) {
+									freeSpace -= Multi.STATIC_COST;
+									freeSpace -= Multi.ADDITIONAL_COST;
+
+									if (freeSpace < 1) {
+										break;
+									}
+								}
+
+							} else if (freeSpace + MessageBlock.STATIC_COST + Multi.ADDITIONAL_COST > MessageB.STATIC_COST) {
+
+							} else {
+								break;
+							}
+						}
 
 						MessageBlock mb = msg.getNextBlock(freeSpace, timeOut);
 
 						if (mb == null) {
-							if (msgs.hasNext())
+							if (msgs.hasNext()) {
 								msg = msgs.next();
-							else
+							} else
 								break;
 						} else {
 							blocks.add(mb);
@@ -740,11 +782,13 @@ public class DefaultNode implements Node {
 				}
 			}
 
+			//System.out.println("final Size: " + getBlocksSize(blocks) + "/" + size);
+
 			if (blocks.isEmpty() && currentState.equals(State.CLOSED)) {
-				return null;
+				throw new NodeClosedException("The node was closed.");
 
 			} else if (blocks.isEmpty()) {
-				return new byte[0];
+				return null;
 
 			} else if (blocks.size() == 1) {
 				return blocks.getFirst().encode().array();
@@ -791,7 +835,7 @@ public class DefaultNode implements Node {
 	 * .held03.jasityProtocol.interfaces.Message)
 	 */
 	@Override
-	public Future<Boolean> sendMessage(final Message msg) {
+	public Future<Boolean> sendMessage(final Message msg) throws NodeClosedException {
 		return sendMessage(msg, Priority.NORMAL);
 	}
 
@@ -803,8 +847,12 @@ public class DefaultNode implements Node {
 	 * com.github.held03.jasityProtocol.interfaces.Message.Priority)
 	 */
 	@Override
-	public Future<Boolean> sendMessage(final Message msg, final Priority priority) {
+	public Future<Boolean> sendMessage(final Message msg, final Priority priority) throws NodeClosedException {
 		synchronized (monitor) {
+			if (currentState.equals(State.CLOSED)) {
+				throw new NodeClosedException("Node has been closed.");
+			}
+
 			SendingMessage sm = new SendingMessage(getNextId(), coder.encodeMessage(msg).array(), priority);
 
 			synchronized (sendingQueue) {
@@ -875,7 +923,7 @@ public class DefaultNode implements Node {
 		// checks if at least one valid listener was found 
 		if (msgToAdd.isEmpty()) {
 			Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING,
-					"A listener was added but it could NOT find a valid listener method! For object {1} into {2}",
+					"A listener was added but it could NOT find a valid listener method! For object {0} into {1}",
 					new Object[] { listener, this });
 
 			return;
@@ -998,7 +1046,7 @@ public class DefaultNode implements Node {
 				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 					e.printStackTrace();
 					Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING,
-							"Listener invokation fails! object {1}; method {2}",
+							"Listener invokation fails! object {0}; method {1}",
 							new Object[] { container.object, container.callback.getName() });
 					Logger.getLogger(AbstractConnection.class.getName()).log(Level.WARNING, "", e);
 				}

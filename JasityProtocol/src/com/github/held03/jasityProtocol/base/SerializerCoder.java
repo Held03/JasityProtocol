@@ -82,6 +82,8 @@ public class SerializerCoder implements MessageCoder {
 
 			buffer.put(buf);
 
+			buffer.rewind();
+
 			return buffer;
 		}
 
@@ -120,6 +122,8 @@ public class SerializerCoder implements MessageCoder {
 	@Override
 	public Message decodeMessage(final ByteBuffer buffer) {
 
+		int position = buffer.position();
+
 		if (buffer.get() == BINARY_MESSAGE_PREFIX) {
 			byte[] name = new byte[buffer.getShort()];
 
@@ -155,7 +159,7 @@ public class SerializerCoder implements MessageCoder {
 			return null;
 		}
 
-		buffer.rewind();
+		buffer.position(position);
 
 		byte[] buf = new byte[buffer.remaining()];
 

@@ -134,9 +134,9 @@ public class ListenerContainer {
 			if (!returning.equals(Boolean.class)) {
 				// if not warn and go on with the next one
 				Logger.getLogger(ListenerContainer.class.getName()).log(
-						Level.FINE,
-						"A method ({5}) was added makred as listener, but it has the worong return value {2},"
-								+ " expect {3}! For object {1}",
+						Level.INFO,
+						"A method ({3}) was marked as listener, but it has the worong return value {1},"
+								+ " expect {2}! For object {0}",
 						new Object[] { listener, returning.getCanonicalName(), Boolean.class.getCanonicalName(),
 								method.getName() });
 				continue;
@@ -155,14 +155,14 @@ public class ListenerContainer {
 			// any other configuration are rejected!
 			else {
 				// warn and go on with the next one
-				Logger.getLogger(ListenerContainer.class.getName()).log(
-						Level.FINE,
-						"A method ({5}) was added makred as listener, but it has the worong return value {2},"
-								+ " expect {3}! For object {1}",
-						new Object[] { listener, returning.getCanonicalName(), Boolean.class.getCanonicalName(),
-								method.getName() });
+				Logger.getLogger(ListenerContainer.class.getName())
+						.log(Level.INFO,
+								"A method ({1}) was marked as listener, but it has the worong parameter cofiguration! For object {0}",
+								new Object[] { listener, method.getName() });
 				continue;
 			}
+
+			method.setAccessible(true);
 
 			// add method to list
 			listeners
