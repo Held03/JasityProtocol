@@ -51,6 +51,54 @@ public class TCPAddress implements Address {
 		// TODO Auto-generated constructor stub
 	}
 
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ( (inetAddress == null) ? 0 : inetAddress.hashCode());
+		result = prime * result + port;
+		return result;
+	}
+
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		TCPAddress other = (TCPAddress) obj;
+		if (inetAddress == null) {
+			if (other.inetAddress != null) {
+				return false;
+			}
+		} else if (!inetAddress.equals(other.inetAddress)) {
+			return false;
+		}
+		if (port != other.port) {
+			return false;
+		}
+		return true;
+	}
+
+
+
 	/*
 	 * (non-Javadoc)
 	 * @see com.github.held03.jasityProtocol.interfaces.Address#connectTo()
@@ -75,12 +123,8 @@ public class TCPAddress implements Address {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (o instanceof TCPAddress) {
-			TCPAddress ad = (TCPAddress) o;
-			return inetAddress.equals(ad.inetAddress) && port == ad.port;
-		}
-		return false;
+	public String toString() {
+		return "TCP[" + inetAddress + ":" + port + "]";
 	}
 
 }

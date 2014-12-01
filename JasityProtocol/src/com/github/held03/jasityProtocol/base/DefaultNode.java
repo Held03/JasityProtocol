@@ -237,6 +237,8 @@ public class DefaultNode implements Node {
 	 * @param nb the block to process
 	 */
 	protected void receivedBlock(final NodeBlock nb) {
+//		System.out.println("[" + Thread.currentThread().getName() + "] Receive: " + nb);
+
 		switch (nb.getNativeType()) {
 		case NodeBlock.BLOCK_MULTIBLOCK:
 			Multi multi = (Multi) nb;
@@ -265,11 +267,12 @@ public class DefaultNode implements Node {
 			switch (hello.getType()) {
 			case Hello.TYPE_KNOCK:
 				/*
+				 * Update remote Version code.
 				 * Answer with ack.
 				 */
-				sendBlock(new Hello(Hello.TYPE_HELLO, CURRENT_VERSION));
-
 				remoteVersionCode = hello.getVersion();
+
+				sendBlock(new Hello(Hello.TYPE_HELLO, CURRENT_VERSION));
 
 				break;
 
@@ -296,7 +299,7 @@ public class DefaultNode implements Node {
 				 */
 			case Hello.TYPE_BYE:
 				/*
-				 * Remote node closed the .
+				 * Remote node closed the connection.
 				 * Close node.
 				 */
 				close();
@@ -636,14 +639,16 @@ public class DefaultNode implements Node {
 	@Override
 	public byte[] getNextBlock() throws InterruptedException, NodeClosedException {
 		synchronized (monitor) {
-			while (!Thread.interrupted()) {
+			while (!Thread.currentThread().isInterrupted()) {
 				byte[] data = getNextBlockDirectly(connection.getBlockSize());
 
 				if (data != null && data.length > 0) {
-					monitor.wait();
-
 					return data;
 				}
+
+				//System.out.println("[" + Thread.currentThread().getName() + "] Waits");
+				monitor.wait();
+				//System.out.println("[" + Thread.currentThread().getName() + "] Continues");
 			}
 		}
 
@@ -697,10 +702,12 @@ public class DefaultNode implements Node {
 	 */
 	@Override
 	public byte[] getNextBlockDirectly(int blocksize) throws NodeClosedException {
+		//System.out.println("GetBlock...");
+
 		synchronized (monitor) {
 
-//			System.out
-//					.println("Blocks: " + blocks.size() + " Msg: " + sendingQueue.size() + "/" + receivingList.size());
+//			System.out.println("[" + Thread.currentThread().getName() + "] Blocks: " + blocks.size() + " Msg: "
+//					+ sendingQueue.size() + "/" + receivingList.size());
 
 			LinkedList<NodeBlock> blocks = new LinkedList<NodeBlock>();
 
@@ -778,7 +785,8 @@ public class DefaultNode implements Node {
 				}
 			}
 
-			//System.out.println("final Size: " + getBlocksSize(blocks) + "/" + size);
+//			System.out.println("[" + Thread.currentThread().getName() + "] final Size: " + getBlocksSize(blocks) + "/"
+//					+ blocksize + " cont: " + Arrays.deepToString(blocks.toArray()));
 
 			if (blocks.isEmpty() && currentState.equals(State.CLOSED)) {
 				throw new NodeClosedException("The node was closed.");
@@ -868,6 +876,9 @@ public class DefaultNode implements Node {
 	@Override
 	public void close() {
 		sendBlock(new Hello(Hello.TYPE_BYE, CURRENT_VERSION), true);
+
+		//System.out.println("Close node! ");
+		//Thread.dumpStack();
 
 		pingSender.cancel();
 

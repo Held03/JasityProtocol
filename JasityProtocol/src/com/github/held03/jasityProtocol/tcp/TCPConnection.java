@@ -100,10 +100,12 @@ public class TCPConnection extends AbstractConnection {
 
 		con.reader = new Thread(con.new Reader());
 		con.reader.setDaemon(false);
+		con.reader.setName("Read from " + connectTo);
 		con.reader.start();
 
 		con.writer = new Thread(con.new Writer());
 		con.writer.setDaemon(true);
+		con.writer.setName("Write to " + connectTo);
 		con.writer.start();
 
 		return n;
@@ -117,16 +119,20 @@ public class TCPConnection extends AbstractConnection {
 
 		Node n = new DefaultNode(remote, con);
 
+		System.out.println("creat node to: " + n.getRemoteAddress());
+
 		con.addNode(n);
 
 		con.socket = connection;
 
 		con.reader = new Thread(con.new Reader());
 		con.reader.setDaemon(false);
+		con.reader.setName("Read from " + remote);
 		con.reader.start();
 
 		con.writer = new Thread(con.new Writer());
 		con.writer.setDaemon(true);
+		con.writer.setName("Write to " + remote);
 		con.writer.start();
 
 		return n;
@@ -179,10 +185,12 @@ public class TCPConnection extends AbstractConnection {
 
 				Address from = new TCPAddress(socket.getInetAddress(), socket.getPort());
 
+				//System.out.println("[" + Thread.currentThread().getName() + "] from: " + from);
+
 				int len;
 				byte[] buf = new byte[MAX_BLOCK_SIZE];
 
-				while (in.readBoolean() && !Thread.interrupted()) {
+				while (in.readBoolean() && !Thread.currentThread().isInterrupted()) {
 					len = in.readInt();
 
 					in.readFully(buf, 0, len);
@@ -215,7 +223,9 @@ public class TCPConnection extends AbstractConnection {
 
 				byte[] buf;
 
-				while ( (buf = getNextBlock(to)) != null && !Thread.interrupted()) {
+				//System.out.println("[" + Thread.currentThread().getName() + "] to: " + to);
+
+				while ( (buf = getNextBlock(to)) != null && !Thread.currentThread().isInterrupted()) {
 					out.writeBoolean(true);
 
 					out.writeInt(buf.length);
@@ -228,9 +238,9 @@ public class TCPConnection extends AbstractConnection {
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			} catch (NodeClosedException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 
 			close();

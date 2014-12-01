@@ -27,8 +27,8 @@
 package com.github.held03.jasityProtocol.base;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Set;
 
 import com.github.held03.jasityProtocol.interfaces.Address;
@@ -53,7 +53,7 @@ public abstract class AbstractConnection implements Connection {
 	 * Usually this nodes have to send as well over this connection, but that is
 	 * not necessary.
 	 */
-	protected HashMap<Address, Node> nodes = new HashMap<Address, Node>();
+	protected Hashtable<Address, Node> nodes = new Hashtable<Address, Node>();
 
 	/**
 	 * List of all remote addresses of the nodes.
@@ -202,6 +202,10 @@ public abstract class AbstractConnection implements Connection {
 			} else {
 				nodes.put(n.getRemoteAddress(), n);
 				addresses.add(n.getRemoteAddress());
+
+//				System.out.println("Added: " + n.getRemoteAddress() + " -> "
+//						+ nodes.get(n.getRemoteAddress()).getRemoteAddress());
+
 				return true;
 			}
 		}

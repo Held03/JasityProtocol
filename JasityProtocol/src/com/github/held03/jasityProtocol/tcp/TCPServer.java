@@ -60,6 +60,8 @@ public class TCPServer extends AbstractServer {
 
 		TCPServer s = new TCPServer(local);
 
+		s.server = server;
+
 		return s;
 
 	}
@@ -113,6 +115,8 @@ public class TCPServer extends AbstractServer {
 				Node n = TCPConnection.newConnection(s);
 
 				addNode(n);
+
+				//addNode(n);
 
 			} catch (IOException e) {
 				e.printStackTrace();
