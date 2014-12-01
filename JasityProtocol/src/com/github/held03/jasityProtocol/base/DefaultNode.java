@@ -43,6 +43,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.github.held03.jasityProtocol.Jasity;
 import com.github.held03.jasityProtocol.base.util.MessageBlockFragment;
 import com.github.held03.jasityProtocol.base.util.MessageContainer;
 import com.github.held03.jasityProtocol.base.util.PingManager;
@@ -85,7 +86,7 @@ public class DefaultNode implements Node {
 	 * version between <code>MIN_VERSION</code> and <code>CURRENT_VERSION</code>
 	 * has to be handled by this implementation.
 	 */
-	public static final long MIN_VERSION = 0;
+	public static final long MIN_VERSION = 1;
 
 	/**
 	 * The version of the used implementation.
@@ -93,7 +94,7 @@ public class DefaultNode implements Node {
 	 * The version codes depends only on this implementation. Other nodes may
 	 * have different version codes.
 	 */
-	public static final long CURRENT_VERSION = 0;
+	public static final long CURRENT_VERSION = Jasity.CURRENT_VERSION;
 
 	/**
 	 * Monitor to synchronize block requests.
@@ -268,11 +269,20 @@ public class DefaultNode implements Node {
 			case Hello.TYPE_KNOCK:
 				/*
 				 * Update remote Version code.
-				 * Answer with ack.
 				 */
 				remoteVersionCode = hello.getVersion();
 
-				sendBlock(new Hello(Hello.TYPE_HELLO, CURRENT_VERSION));
+				/*
+				 * Check remote version and decline if too old.
+				 * Otherwise accept it with Hello.
+				 */
+				if (remoteVersionCode < MIN_VERSION) {
+					sendBlock(new Hello(Hello.TYPE_BUSY, CURRENT_VERSION));
+
+				} else {
+					sendBlock(new Hello(Hello.TYPE_HELLO, CURRENT_VERSION));
+
+				}
 
 				break;
 
