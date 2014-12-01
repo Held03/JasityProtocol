@@ -45,10 +45,16 @@ public class Jasity {
 	 * Code | Name |   Date   | Notes
 	 * -----+------+----------+----------------
 	 *    0 | v0.0 |    -     | Pre-release version
-	 *    1 | v1.0 |2014-12-01| First release (CURRENT)
+	 *    1 | v1.0 |2014-12-01| First release
+	 *    2 |   -  |    -     | unreleased (CURRENT)
 	 * </pre>
 	 */
-	public static final long CURRENT_VERSION = 1;
+	public static final long CURRENT_VERSION = 2;
+
+	/**
+	 * 
+	 */
+	public static final String CURRENT_VERSION_NAME = "v1.1";
 
 	/**
 	 * 
