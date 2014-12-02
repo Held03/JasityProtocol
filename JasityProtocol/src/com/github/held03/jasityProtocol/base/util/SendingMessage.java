@@ -157,14 +157,50 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Object#hashCode()
+		 */
 		@Override
-		public boolean equals(final Object o) {
-			if (o instanceof MessageBlockDef) {
-				MessageBlockDef mbd = (MessageBlockDef) o;
-				return (offset == mbd.offset && length == mbd.length);
-			}
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + length;
+			result = prime * result + offset;
+			return result;
+		}
 
-			return false;
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Object#equals(java.lang.Object)
+		 */
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			MessageBlockDef other = (MessageBlockDef) obj;
+			if (!getOuterType().equals(other.getOuterType())) {
+				return false;
+			}
+			if (length != other.length) {
+				return false;
+			}
+			if (offset != other.offset) {
+				return false;
+			}
+			return true;
+		}
+
+		private SendingMessage getOuterType() {
+			return SendingMessage.this;
 		}
 	}
 
@@ -369,18 +405,18 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 	 * @see java.util.concurrent.Future#get()
 	 */
 	@Override
-	public Boolean get() throws InterruptedException, ExecutionException {
-		synchronized (this) {
-			if (isCancelled())
-				return null;
+	public synchronized Boolean get() throws InterruptedException, ExecutionException {
 
-			if (isDone())
-				return finished;
+		if (isCancelled())
+			return null;
 
-			this.wait();
-
+		if (isDone())
 			return finished;
-		}
+
+		this.wait();
+
+		return finished;
+
 	}
 
 	/*
@@ -440,15 +476,19 @@ public class SendingMessage extends MessageContainer implements Future<Boolean>,
 		return currentOffset;
 	}
 
-	@Override
-	public boolean equals(final Object o) {
-		if (o instanceof SendingMessage) {
-			SendingMessage sm = (SendingMessage) o;
 
-			return (sm.messageID == messageID);
-		}
 
-		return false;
-	}
+//	@Override
+//	public boolean equals(final Object o) {
+//		if (o instanceof SendingMessage) {
+//			SendingMessage sm = (SendingMessage) o;
+//
+//			return (sm.messageID == messageID);
+//		}
+//
+//		return false;
+//	}
+
+
 
 }

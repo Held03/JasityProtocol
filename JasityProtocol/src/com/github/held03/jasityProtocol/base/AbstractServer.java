@@ -73,22 +73,6 @@ public abstract class AbstractServer extends AbstractConnection implements Serve
 
 	}
 
-	/**
-	 * Normal constructor.
-	 */
-	public AbstractServer(final Address localAddress, final Node n) {
-		super(localAddress, n);
-
-	}
-
-	/**
-	 * Normal constructor.
-	 */
-	public AbstractServer(final Address localAddress, final Node n, final boolean closeIfEmpty) {
-		super(localAddress, n, closeIfEmpty);
-
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see com.github.held03.jasityProtocol.interfaces.Server#close()
