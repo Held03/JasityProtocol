@@ -26,8 +26,17 @@
 
 package com.github.held03.jasityProtocol;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import com.github.held03.jasityProtocol.interfaces.BackEnd;
+
 
 /**
+ * Static class for general library stuff.
+ * Contains stuff like the current version of the library and a back end
+ * registration.
+ * 
  * @author held03
  */
 public class Jasity {
@@ -48,19 +57,32 @@ public class Jasity {
 	 *    1 | v1.0 |2014-12-01| First release
 	 *    2 |   -  |    -     | unreleased (CURRENT)
 	 * </pre>
+	 * 
+	 * @see #CURRENT_VERSION_NAME
 	 */
 	public static final long CURRENT_VERSION = 2;
 
 	/**
+	 * String representing the current version in a human readable kind.
 	 * 
+	 * @see #CURRENT_VERSION
 	 */
 	public static final String CURRENT_VERSION_NAME = "v1.1";
 
 	/**
-	 * 
+	 * List of all registered back ends.
+	 * <p>
+	 * It is not necessary to register a back end.
+	 */
+	private static Set<BackEnd> backends = new HashSet<BackEnd>();
+
+	/**
+	 * Closed constructor. It is NOT for any use.
 	 */
 	private Jasity() {
-		// TODO Auto-generated constructor stub
+		/*
+		 * Should be never used.
+		 */
 	}
 
 }
