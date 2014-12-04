@@ -70,6 +70,7 @@ public class SerializerCoder implements MessageCoder {
 				name = msg.getClass().getCanonicalName().getBytes("UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				// never called
+				name = msg.getClass().getCanonicalName().getBytes();
 			}
 
 			ByteBuffer buffer = ByteBuffer.allocate(1 + 2 + name.length + buf.remaining());

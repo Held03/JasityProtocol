@@ -114,4 +114,40 @@ public class MessageContainer {
 		return binaryData.length;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (int) (messageID ^ (messageID >>> 32));
+		return result;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (! (obj instanceof MessageContainer)) {
+			return false;
+		}
+		MessageContainer other = (MessageContainer) obj;
+		if (messageID != other.messageID) {
+			return false;
+		}
+		return true;
+	}
+
+
+
 }
