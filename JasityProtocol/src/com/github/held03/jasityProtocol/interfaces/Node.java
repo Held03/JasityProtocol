@@ -262,4 +262,17 @@ public interface Node {
 	 * @return the state of the node
 	 */
 	public State getState();
+
+	/**
+	 * Blocks until the node could establish connection to the remote.
+	 * <p>
+	 * If the connection could not be established either the
+	 * <code>NodeClosedException</code> or the <code>InterruptedException</code>
+	 * will be thrown, depending on implementation and event. If the method will
+	 * return normal, the connection was successfully up set.
+	 * 
+	 * @throws NodeClosedException
+	 * @throws InterruptedException
+	 */
+	public void waitForConnection() throws NodeClosedException, InterruptedException;
 }

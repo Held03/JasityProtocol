@@ -56,10 +56,10 @@
  * {@link com.github.held03.jasityProtocol.interfaces.Server} The server
  * instance can be retrieved from the
  * {@link com.github.held03.jasityProtocol.interfaces.BackEnd} you want to use.
- * To allow connection, a
+ * To allow to connect to, a
  * {@link com.github.held03.jasityProtocol.interfaces.ServerListener} has to be
- * implemented by the application. Through it the application can receive the
- * new connections.
+ * implemented by the application and applied on the server. Through it the
+ * application can receive the new connections.
  * <p>
  * The client side has to create or get a
  * {@link com.github.held03.jasityProtocol.interfaces.Address} instance for the

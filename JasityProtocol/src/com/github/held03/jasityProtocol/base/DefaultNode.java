@@ -1094,6 +1094,11 @@ public class DefaultNode implements Node {
 		return currentState;
 	}
 
+	/**
+	 * Feed for {@link Timer} to execute pings.
+	 * 
+	 * @author adam
+	 */
 	class PingTimerTask extends TimerTask {
 
 		/*
@@ -1111,6 +1116,21 @@ public class DefaultNode implements Node {
 			}
 		}
 
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.github.held03.jasityProtocol.interfaces.Node#waitForConnection()
+	 */
+	@Override
+	public void waitForConnection() throws NodeClosedException, InterruptedException {
+		synchronized (monitor) {
+			while (currentState.equals(State.OPENING) && !Thread.currentThread().isInterrupted())
+				monitor.wait();
+
+			if (currentState.equals(State.CONNECTED))
+				throw new NodeClosedException();
+		}
 	}
 
 }
