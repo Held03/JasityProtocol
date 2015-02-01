@@ -88,10 +88,9 @@ public class SerializerCoder implements MessageCoder {
 			return buffer;
 		}
 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		try {
-			ObjectOutputStream oos = new ObjectOutputStream(baos);
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				ObjectOutputStream oos = new ObjectOutputStream(baos)) {
 
 			oos.writeObject(msg);
 
@@ -166,10 +165,8 @@ public class SerializerCoder implements MessageCoder {
 
 		buffer.get(buf);
 
-		ByteArrayInputStream baos = new ByteArrayInputStream(buf);
-
-		try {
-			ObjectInputStream ois = new ObjectInputStream(baos);
+		try (ByteArrayInputStream baos = new ByteArrayInputStream(buf);
+				ObjectInputStream ois = new ObjectInputStream(baos)) {
 
 			Object o = ois.readObject();
 

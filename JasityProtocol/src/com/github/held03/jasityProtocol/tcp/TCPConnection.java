@@ -80,7 +80,8 @@ public class TCPConnection extends AbstractConnection {
 	/**
 	 * Creates a node connected to the given address.
 	 * 
-	 * @param connectTo the address to connect to
+	 * @param connectTo
+	 *            the address to connect to
 	 * @return the node representing this connection
 	 * @throws IOException
 	 */
@@ -180,8 +181,7 @@ public class TCPConnection extends AbstractConnection {
 		 */
 		@Override
 		public void run() {
-			try {
-				DataInputStream in = new DataInputStream(TCPConnection.this.socket.getInputStream());
+			try (DataInputStream in = new DataInputStream(TCPConnection.this.socket.getInputStream())) {
 
 				Address from = new TCPAddress(socket.getInetAddress(), socket.getPort());
 
@@ -216,8 +216,7 @@ public class TCPConnection extends AbstractConnection {
 		 */
 		@Override
 		public void run() {
-			try {
-				DataOutputStream out = new DataOutputStream(TCPConnection.this.socket.getOutputStream());
+			try (DataOutputStream out = new DataOutputStream(TCPConnection.this.socket.getOutputStream())) {
 
 				Address to = new TCPAddress(socket.getInetAddress(), socket.getPort());
 
